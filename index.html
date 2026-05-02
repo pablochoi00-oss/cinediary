@@ -521,7 +521,7 @@ const CONFIG={
   SHEET_ID:'1_UV-2lLVis8tRmN2S7LqIJqkCjjSxl0XFPAwN4hTjkM',
   CLIENT_EMAIL:'cinediary@cinediary.iam.gserviceaccount.com',
   PRIVATE_KEY:'-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCoCHmiUIIBGVYU\nAqcaXfeH0O48sYzNwW5yb9HHTL+8re47ZLm03HMXUBNCymD4vYeA3Hwvvg+56r9N\nXhKGxkmFEy0jza3wizKjIpR8VSPBSfspvQHgbjEr2P/HOCisMXjNE2RtB4bx33d8\n0o5wHe73CV/b2W1cLWRrG7U4AwCfpGq/Sq09gCZceLQGyjnUnasYnL0i+SoPUtM4\n34ZMiBm67WVc573a/qg6fP4ik+tZDIiidjHztWklLBVGrkVGVKLcqHT997WoYD4l\nY4i9WEYKOQ4byMKfDHiymqc+4Y+N5WWd3L7U/KlOVj4s1Us3BfRMazYgpwbnhWSK\n0t5cw3tbAgMBAAECggEAR09Fc11QNrAuaBKSIO304OYJXKeK1jz7JsSOldJb4nI7\n0mfWKcuOajvY2LTzP0yLp2OqrkYt/VwCsI42NY0L4VY4h2O/qAAizrmbo0IsiNhh\nJx7nn3uUEYQnVD/gfucF2Z4bteuGWLpZxpbCzRDe+2a2kCHvN7mpzoy1NN6NUrHv\nSUaE8vVf1sHCIK59xpDKVjWlOEuy8WmbhwMeMugmyvP/nXjKhAC+wsbM7giVZdTJ\n5IVWKW0xM1S9boqVDhFFCNNjAIS03s04Yy7n7fS6/WO75/E+wx9sIM1RqNAHSRa5\n/KQKdf3A67ODQusX9SKfMAYvZSRqGaUQPjRY3RU8VQKBgQDYlL52ZKAEj4w8UR/f\ncemxxLfyYznPBbEd2gc39B58CH5Nse0YOuLCPDUHoHPUfZtes+1XfH/Gx/jTrko8\nsW+xzoV3GcX4S3mv7+Ej26KMj9+B/8vJ8LRD4UNL+62RWJ1W8mqip+Z9VFHtlZbP\n2ZTIN7+jJGJMss7LQ3rHPSHQHQKBgQDGnbdUpG89o2WQITR+mHO6OxxcNB21bLs8\n2a/RcK1PAb8UMYbShIQfgeLrLwbswbIDEnivGwAO7R9LOtOya+wPc8J3P7jMW2Bd\ntPKN7QCW+6StH81SjOJv5joKYHZjgv/f/YbNAzfOSgJWEEHDskilfJcSZ6LTyN81\nwwdWsxwP1wKBgFdYzeOzu3F7b0RYN3GHYIeoXcNsz0C1+/OdHfIsCytcxYuSKZvv\nC8roOz7jMDPPoJy2Fg+Fj4bc2XaNwTTvHqvoLZ2WEGiOD/qr1PIAP3NPBwZH4qmD\n4T/LFrgLPbnzsikBxY3qByQeoJggD12uU7nX+frSzq4+IvaJNXgrKHrlAoGAd38Q\nfCZqn0Udp/eyY7BJgHRr/bWFYlBG3reCJpqKSwyb8ARUP3hnHaXB5wnmOq/W8C4+\n2et+v3w+5b5A/AoefrWA/Moj3x/i/L4PaQB86FoCm/6UQ+RroDN+HBwpXnnEhPk+\nDz6uZrj0at9hEeLD/nzVT8d2mcEzOl9anPkqGwUCgYAXVUtnJyXtSMThLnsdltNl\nJYP82/G5qYG0/xW2bkaeMy4cNmaF+lgeUrRtdC4fAJykBnQ2L3V9PoRyEObSRxi1\nvDeXEzJ+Athja+nNVRbzJw2MM6oYPom9Xzvem4PwqnzkBdDLlIFj7TVSiOyPjFqE\nhykHXVB1ONCYAUTHmxmQeg==\n-----END PRIVATE KEY-----\n',
-  TMDB_API_KEY:'f7d45547cbfc88c2d3f942e941cc8777'  // https://www.themoviedb.org/settings/api 에서 무료 발급
+  TMDB_API_KEY:'f7d45547cbfc88c2d3f942e941cc8777'
 };
 /* ★★★★★★★★★ */
 
@@ -608,7 +608,7 @@ let _tok=null,_texp=0;
 async function getToken(){
   if(_tok&&Date.now()<_texp-60000)return _tok;
   const now=Math.floor(Date.now()/1000);
-  const b64u=s=>btoa(unescape(encodeURIComponent(s))).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+  const b64u=s=>{const bytes=new TextEncoder().encode(s);let bin='';for(let i=0;i<bytes.length;i++)bin+=String.fromCharCode(bytes[i]);return btoa(bin).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');};
   const h=b64u(JSON.stringify({alg:'RS256',typ:'JWT'}));
   const c=b64u(JSON.stringify({iss:CONFIG.CLIENT_EMAIL,scope:'https://www.googleapis.com/auth/spreadsheets',aud:'https://oauth2.googleapis.com/token',exp:now+3600,iat:now}));
   const si=`${h}.${c}`;
@@ -616,7 +616,7 @@ async function getToken(){
   const kd=Uint8Array.from(atob(pk),c=>c.charCodeAt(0));
   const ck=await crypto.subtle.importKey('pkcs8',kd,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['sign']);
   const sb=await crypto.subtle.sign('RSASSA-PKCS1-v1_5',ck,new TextEncoder().encode(si));
-  const sig=btoa(String.fromCharCode(...new Uint8Array(sb))).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+  const sigBytes=new Uint8Array(sb);let sigStr='';for(let i=0;i<sigBytes.length;i++)sigStr+=String.fromCharCode(sigBytes[i]);const sig=btoa(sigStr).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
   const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${si}.${sig}`});
   const d=await r.json();_tok=d.access_token;_texp=Date.now()+(d.expires_in||3600)*1000;return _tok;
 }
@@ -629,7 +629,7 @@ async function loadSheets(){
     const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${SN}!A2:W?majorDimension=ROWS`,{headers:{Authorization:`Bearer ${tok}`}});
     const d=await r.json();
     diary=(d.values||[]).map(row=>({id:parseInt(row[0])||Date.now(),type:row[1]||'watched',addedAt:row[2]||'',date:row[3]||'',platform:row[4]||'',withWho:row[5]||'',watchCountry:row[6]||'',watchCity:row[7]||'',rating:parseInt(row[8])||0,review:row[9]||'',extra:row[10]||'',memo:row[11]||'',rewatch:row[22]==='TRUE'||row[22]==='true'||row[22]===true,movie:{title:row[12]||'',title_en:row[13]||'',year:row[14]||'',director:row[15]||'',genre:row[16]?row[16].split(','):[],country:row[17]||'',runtime:row[18]||'',synopsis:row[20]||'',cast:row[21]?row[21].split(','):[]}})).filter(e=>e.movie.title);
-    setSS('ok','동기화됨');
+    setSS('ok','동기화됨');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_e){}
   }catch(e){console.error(e);setSS('error','불러오기 실패');try{const ls=localStorage.getItem('cd_bak');if(ls)diary=JSON.parse(ls);}catch(e2){}}
 }
 async function saveSheet(entry){
@@ -639,7 +639,7 @@ async function saveSheet(entry){
     const tok=await getToken();const m=entry.movie;
     const row=[entry.id,entry.type,entry.addedAt,entry.date||'',entry.platform||'',entry.withWho||'',entry.watchCountry||'',entry.watchCity||'',entry.rating||0,entry.review||'',entry.extra||'',entry.memo||'',m.title,m.title_en||'',m.year||'',m.director||'',(m.genre||[]).join(','),m.country||'',m.runtime||'','',m.synopsis||'',(m.cast||[]).join(','),entry.rewatch?'TRUE':'FALSE'];
     await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${SN}!A:W:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({values:[row]})});
-    setSS('ok','저장됨');
+    setSS('ok','저장됨');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_e){}
   }catch(e){console.error(e);setSS('error','저장 실패');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(e2){}}
 }
 async function deleteSheet(id){
@@ -662,7 +662,7 @@ function setSS(s,t){const d=document.getElementById('synd'),tx=document.getEleme
 /* INIT */
 async function init(){
   loadTheme();const t0=Date.now();
-  await loadSheets();
+  try{await loadSheets();}catch(e){console.error("init loadSheets error",e);}
   renderDiary();renderStats();updHdr();
   setTimeout(hideSplash,Math.max(0,3200-(Date.now()-t0)));
 }
@@ -768,7 +768,7 @@ function showLF(type){
     <div class="fgp"><label>도시</label>${mkCitySelect('fCit','','')}</div>
     <div class="fgp" style="grid-column:1/-1"><label>별점</label><div class="stars" id="stRat">${[1,2,3,4,5].map(i=>`<span class="star" onclick="setR(${i})" onmouseover="hovR(${i})" onmouseout="renR()">★</span>`).join('')}</div></div>
     <div class="fgp" style="grid-column:1/-1"><label>감상평</label><textarea id="fRev" placeholder="이 영화를 보고 느낀 점 ..."></textarea></div>
-    <div class="fgp" style="grid-column:1/-1"><label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:14px"><input type="checkbox" id="fRewatch" style="width:17px;height:17px;accent-color:var(--gold);cursor:pointer;flex-shrink:0"><span>🔁 다시 보고 싶은 영화</span></label></div>\`
+    <div class="fgp" style="grid-column:1/-1"><label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:14px"><input type="checkbox" id="fRewatch" style="width:17px;height:17px;accent-color:var(--gold);cursor:pointer;flex-shrink:0"><span>🔁 다시 보고 싶은 영화</span></label></div>`
   :`<div class="fgp" style="grid-column:1/-1"><label>메모</label><textarea id="fMemo" placeholder="왜 보고 싶은지, 추천 받은 곳 ..."></textarea></div>`;
   document.getElementById('lfArea').innerHTML=`
     <div class="lf">
@@ -885,7 +885,7 @@ async function saveEntry(type){
     if(diary.length<before)showToast('♥ 위시리스트에서 자동 제거');
   }else{entry.memo=document.getElementById('fMemo')?.value||'';}
   entry.extra=document.getElementById('fEx')?.value||'';
-  diary.unshift(entry);updHdr();
+  diary.unshift(entry);updHdr();try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_e){}
   document.getElementById('sRes').innerHTML='';document.getElementById('lfArea').innerHTML='';
   document.getElementById('sIn').value='';curMovie=null;window._sl=[];
   showToast(type==='watched'?'🎬 관람 기록 저장됨!':'♥ 위시리스트에 추가됨!');
@@ -981,7 +981,7 @@ function renderEF(id){
     <div class="fgp"><label>도시</label>${mkCitySelect('eFCit',e.watchCountry||'',e.watchCity||'')}</div>
     <div class="fgp" style="grid-column:1/-1"><label>별점</label><div class="stars" id="eSt">${[1,2,3,4,5].map(i=>`<span class="star" onclick="setER(${i},${id})" onmouseover="hovER(${i})" onmouseout="renER(${id})" style="color:${i<=_editRating?'var(--gold)':'var(--tx3)'}">★</span>`).join('')}</div></div>
     <div class="fgp" style="grid-column:1/-1"><label>감상평</label><textarea id="eFRev" placeholder="감상평 ...">${e.review||''}</textarea></div>
-    <div class="fgp" style="grid-column:1/-1"><label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:14px"><input type="checkbox" id="eFRewatch" ${e.rewatch?'checked':''} style="width:17px;height:17px;accent-color:var(--gold);cursor:pointer;flex-shrink:0"><span>🔁 다시 보고 싶은 영화</span></label></div>\`
+    <div class="fgp" style="grid-column:1/-1"><label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:14px"><input type="checkbox" id="eFRewatch" ${e.rewatch?'checked':''} style="width:17px;height:17px;accent-color:var(--gold);cursor:pointer;flex-shrink:0"><span>🔁 다시 보고 싶은 영화</span></label></div>`
   :`<div class="fgp" style="grid-column:1/-1"><label>메모</label><textarea id="eFMemo" placeholder="메모 ...">${e.memo||''}</textarea></div>`;
   document.getElementById('mCon').innerHTML=`
     <div class="modal-tabs">
@@ -1014,7 +1014,7 @@ async function saveEF(id){
 async function markW(id){closeMD();const e=diary.find(d=>d.id===id);if(!e)return;curMovie=e.movie;diary=diary.filter(d=>d.id!==id);await deleteSheet(id);showLF('watched');showToast('관람 기록 양식을 작성해주세요!');showTab('search',document.querySelector('.tab'));}
 function closeM(ev){if(ev.target===document.getElementById('mBg'))closeMD();}
 function closeMD(){document.getElementById('mBg').classList.remove('open');}
-async function delEntry(id){if(!confirm('이 기록을 삭제할까요?'))return;diary=diary.filter(e=>e.id!==id);updHdr();closeMD();renderDiary();showToast('삭제되었습니다.');await deleteSheet(id);}
+async function delEntry(id){if(!confirm('이 기록을 삭제할까요?'))return;diary=diary.filter(e=>e.id!==id);updHdr();closeMD();renderDiary();showToast('삭제되었습니다.');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_e){}await deleteSheet(id);}
 
 /* STATS */
 function renderStats(){
@@ -1089,9 +1089,7 @@ function exportCSV(filter){
     ESC(e.movie.synopsis),ESC((e.movie.cast||[]).join('/')),
     e.rewatch?'예':'아니오'
   ].join(','));
-  const csv='﻿'+header.join(',')+'
-'+rows.join('
-');
+  const csv='\ufeff'+header.join(',')+String.fromCharCode(10)+rows.join(String.fromCharCode(10));
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
