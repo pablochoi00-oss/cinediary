@@ -452,7 +452,7 @@ main{padding:22px 20px;max-width:960px;margin:0 auto;overflow-x:hidden;}
       </div>
       <div class="ssec active" id="st-year"></div>
       <div class="ssec" id="st-loc"></div>
-      <div class="ssec" id="st-genre"></div>
+      <div class="ssec" id="st-genre" style="display:none"></div>
       <div class="ssec" id="st-platform"></div>
     </div>
     <!-- SETTINGS -->
@@ -479,12 +479,33 @@ main{padding:22px 20px;max-width:960px;margin:0 auto;overflow-x:hidden;}
 
       <div class="set-card" style="margin-top:14px">
         <div class="set-hd">🗒️ 앱 아이콘 업데이트 방법</div>
-        <div class="set-desc" style="line-height:1.9">홈화면 아이콘 디자인이 변경되었을 때 업데이트하는 방법:<br>
+        <div class="set-desc" style="line-height:1.9">홈화면 아이콘 디자인이 변경되었을 때:<br>
         <span style="color:var(--tx3);font-size:12px">
           ① 홈화면에서 CineDiary 아이콘 꾹 누르기 → <strong style="color:var(--tx2)">북마크 삭제</strong><br>
-          ② Safari에서 이 파일 다시 열기<br>
+          ② Safari에서 파일 다시 열기<br>
           ③ 하단 공유버튼(□↑) → <strong style="color:var(--tx2)">홈 화면에 추가</strong>
         </span></div>
+      </div>
+
+      <div class="set-card" style="margin-top:14px">
+        <div class="set-hd">📤 데이터 내보내기 (CSV)</div>
+        <div class="set-desc">내 모든 관람 기록을 CSV 파일로 저장합니다. 엑셀, 구글 스프레드시트에서 열 수 있습니다.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onclick="exportCSV('all')" style="padding:10px 16px;background:var(--gold);color:var(--bg);border:none;border-radius:var(--rs);font-size:13px;font-family:'Noto Serif KR',serif;cursor:pointer;">📥 전체 내보내기</button>
+          <button onclick="exportCSV('watched')" style="padding:10px 16px;background:var(--sf2);color:var(--tx);border:1px solid var(--bd2);border-radius:var(--rs);font-size:13px;font-family:'Noto Serif KR',serif;cursor:pointer;">관람완료만</button>
+          <button onclick="exportCSV('wishlist')" style="padding:10px 16px;background:var(--sf2);color:var(--tx);border:1px solid var(--bd2);border-radius:var(--rs);font-size:13px;font-family:'Noto Serif KR',serif;cursor:pointer;">보고싶어요만</button>
+        </div>
+        <div id="csv-msg" style="font-size:12px;margin-top:8px;color:var(--tx3)"></div>
+      </div>
+
+      <div class="set-card" style="margin-top:14px">
+        <div class="set-hd">☁️ 구글 시트 클라우드 동기화</div>
+        <div class="set-desc" style="line-height:1.8">
+          구글 시트가 설정되면 <strong>폰을 바꿔도, 앱을 삭제해도</strong> 데이터가 구글 서버에 안전하게 보관됩니다.<br>
+          <span style="color:var(--tx3);font-size:12px">CONFIG의 SHEET_ID, CLIENT_EMAIL, PRIVATE_KEY를 설정하면 자동 동기화됩니다.</span>
+        </div>
+        <div id="sheet-sync-status" style="margin-top:8px;font-size:13px"></div>
+        <button onclick="testSheetConnection()" style="margin-top:10px;padding:10px 16px;background:var(--sf2);color:var(--tx);border:1px solid var(--bd2);border-radius:var(--rs);font-size:13px;font-family:'Noto Serif KR',serif;cursor:pointer;">🔗 구글 시트 연결 테스트</button>
       </div>
     </div>
   </main>
@@ -561,6 +582,15 @@ function initSettings(){
     if(dot){ dot.classList.add('bad'); dot.classList.remove('ok'); }
     if(msg) msg.innerHTML = '<span style="color:var(--tx3)">API 키 미설정 — 아래에 입력하세요</span>';
   }
+  // Sheet status
+  const ss = document.getElementById('sheet-sync-status');
+  if(ss){
+    if(cfgOk()){
+      ss.innerHTML='<span style="color:var(--grn)">✅ 구글 시트 설정됨</span>';
+    } else {
+      ss.innerHTML='<span style="color:var(--tx3)">미설정 — CONFIG에 SHEET_ID 입력 필요</span>';
+    }
+  }
 }
 let diary=[],curMovie=null,curRating=0,curFilter='all',_editRating=0;
 const CTRS=['한국','일본','미국','영국','프랑스','독일','이탈리아','스페인','중국','홍콩','대만','태국','베트남','인도','호주','캐나다','멕시코','브라질','기타'];
@@ -596,9 +626,9 @@ async function loadSheets(){
   setSS('syncing','불러오는 중...');
   try{
     const tok=await getToken();
-    const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${SN}!A2:V?majorDimension=ROWS`,{headers:{Authorization:`Bearer ${tok}`}});
+    const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${SN}!A2:W?majorDimension=ROWS`,{headers:{Authorization:`Bearer ${tok}`}});
     const d=await r.json();
-    diary=(d.values||[]).map(row=>({id:parseInt(row[0])||Date.now(),type:row[1]||'watched',addedAt:row[2]||'',date:row[3]||'',platform:row[4]||'',withWho:row[5]||'',watchCountry:row[6]||'',watchCity:row[7]||'',rating:parseInt(row[8])||0,review:row[9]||'',extra:row[10]||'',memo:row[11]||'',movie:{title:row[12]||'',title_en:row[13]||'',year:row[14]||'',director:row[15]||'',genre:row[16]?row[16].split(','):[],country:row[17]||'',runtime:row[18]||'',synopsis:row[20]||'',cast:row[21]?row[21].split(','):[]}})).filter(e=>e.movie.title);
+    diary=(d.values||[]).map(row=>({id:parseInt(row[0])||Date.now(),type:row[1]||'watched',addedAt:row[2]||'',date:row[3]||'',platform:row[4]||'',withWho:row[5]||'',watchCountry:row[6]||'',watchCity:row[7]||'',rating:parseInt(row[8])||0,review:row[9]||'',extra:row[10]||'',memo:row[11]||'',rewatch:row[22]==='TRUE'||row[22]==='true'||row[22]===true,movie:{title:row[12]||'',title_en:row[13]||'',year:row[14]||'',director:row[15]||'',genre:row[16]?row[16].split(','):[],country:row[17]||'',runtime:row[18]||'',synopsis:row[20]||'',cast:row[21]?row[21].split(','):[]}})).filter(e=>e.movie.title);
     setSS('ok','동기화됨');
   }catch(e){console.error(e);setSS('error','불러오기 실패');try{const ls=localStorage.getItem('cd_bak');if(ls)diary=JSON.parse(ls);}catch(e2){}}
 }
@@ -607,8 +637,8 @@ async function saveSheet(entry){
   setSS('syncing','저장 중...');
   try{
     const tok=await getToken();const m=entry.movie;
-    const row=[entry.id,entry.type,entry.addedAt,entry.date||'',entry.platform||'',entry.withWho||'',entry.watchCountry||'',entry.watchCity||'',entry.rating||0,entry.review||'',entry.extra||'',entry.memo||'',m.title,m.title_en||'',m.year||'',m.director||'',(m.genre||[]).join(','),m.country||'',m.runtime||'','',m.synopsis||'',(m.cast||[]).join(',')];
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${SN}!A:V:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({values:[row]})});
+    const row=[entry.id,entry.type,entry.addedAt,entry.date||'',entry.platform||'',entry.withWho||'',entry.watchCountry||'',entry.watchCity||'',entry.rating||0,entry.review||'',entry.extra||'',entry.memo||'',m.title,m.title_en||'',m.year||'',m.director||'',(m.genre||[]).join(','),m.country||'',m.runtime||'','',m.synopsis||'',(m.cast||[]).join(','),entry.rewatch?'TRUE':'FALSE'];
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${SN}!A:W:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({values:[row]})});
     setSS('ok','저장됨');
   }catch(e){console.error(e);setSS('error','저장 실패');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(e2){}}
 }
@@ -737,7 +767,8 @@ function showLF(type){
     <div class="fgp"><label>국가</label>${mkCtrSelect('fCtr','','handleCtrChange(\'fCtr\',\'fCit\')')}</div>
     <div class="fgp"><label>도시</label>${mkCitySelect('fCit','','')}</div>
     <div class="fgp" style="grid-column:1/-1"><label>별점</label><div class="stars" id="stRat">${[1,2,3,4,5].map(i=>`<span class="star" onclick="setR(${i})" onmouseover="hovR(${i})" onmouseout="renR()">★</span>`).join('')}</div></div>
-    <div class="fgp" style="grid-column:1/-1"><label>감상평</label><textarea id="fRev" placeholder="이 영화를 보고 느낀 점 ..."></textarea></div>`
+    <div class="fgp" style="grid-column:1/-1"><label>감상평</label><textarea id="fRev" placeholder="이 영화를 보고 느낀 점 ..."></textarea></div>
+    <div class="fgp" style="grid-column:1/-1"><label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:14px"><input type="checkbox" id="fRewatch" style="width:17px;height:17px;accent-color:var(--gold);cursor:pointer;flex-shrink:0"><span>🔁 다시 보고 싶은 영화</span></label></div>\`
   :`<div class="fgp" style="grid-column:1/-1"><label>메모</label><textarea id="fMemo" placeholder="왜 보고 싶은지, 추천 받은 곳 ..."></textarea></div>`;
   document.getElementById('lfArea').innerHTML=`
     <div class="lf">
@@ -754,60 +785,87 @@ function showLF(type){
     const _ci=document.getElementById('fCit');if(_ci)_ci.addEventListener('change',()=>handleCityChange('fCit'));
   },50);
 }
-/* 커스텀 위치 저장/불러오기 */
-function getCustomLoc(){try{return JSON.parse(localStorage.getItem('cd_cloc')||'{}');}catch(e){return{};}}
-function saveCustomLoc(ctr,city){if(!ctr||!city)return;const d=getCustomLoc();if(!d[ctr])d[ctr]=[];if(!d[ctr].includes(city))d[ctr].unshift(city);try{localStorage.setItem('cd_cloc',JSON.stringify(d));}catch(e){}}
-function getCtrList(){const d=getCustomLoc();const used=Object.keys(d);const base=CTRS.filter(c=>c!=='기타');const extra=used.filter(c=>!base.includes(c));return [...base,...extra];}
-function getCityList(ctr){if(!ctr)return[];const d=getCustomLoc();const custom=d[ctr]||[];const preset=(CIT[ctr]||[]).filter(c=>c!=='기타');const extra=custom.filter(c=>!preset.includes(c));return [...preset,...extra];}
+/* ── 즐겨찾기 위치 (내가 입력한 것만) ── */
+function getFavLoc(){try{return JSON.parse(localStorage.getItem('cd_favloc')||'{"ctrs":[],"cities":{}}');}catch(e){return{ctrs:[],cities:{}};}}
+function saveFavLoc(ctr,city){
+  if(!ctr)return;
+  const d=getFavLoc();
+  if(!d.ctrs)d.ctrs=[];
+  if(!d.cities)d.cities={};
+  if(!d.ctrs.includes(ctr))d.ctrs.unshift(ctr);
+  if(city){
+    if(!d.cities[ctr])d.cities[ctr]=[];
+    if(!d.cities[ctr].includes(city))d.cities[ctr].unshift(city);
+  }
+  try{localStorage.setItem('cd_favloc',JSON.stringify(d));}catch(e){}
+}
+// getCustomLoc 호환용 (통계 FLAG 매핑에 사용)
+function getCustomLoc(){const d=getFavLoc();const r={};(d.ctrs||[]).forEach(c=>{r[c]=d.cities[c]||[];});return r;}
+function saveCustomLoc(ctr,city){saveFavLoc(ctr,city);}
 
 function mkCtrSelect(id,selectedVal,onchange){
-  const list=getCtrList();
-  const opts=list.map(c=>`<option value="${c}"${selectedVal===c?' selected':''}>${c}</option>`).join('');
-  return `<select id="${id}" onchange="${onchange}"><option value="">선택...</option>${opts}<option value="__custom__">✏️ 직접 입력</option></select><input type="text" id="${id}_custom" placeholder="국가명 입력..." style="display:none;margin-top:4px" oninput="onCtrCustomInput('${id}')">`;
-}
-function mkCitySelect(id,ctr,selectedVal){
-  if(!ctr)return`<select id="${id}"><option value="">국가 먼저 선택</option></select><input type="text" id="${id}_custom" placeholder="도시명 입력..." style="display:none;margin-top:4px">`;
-  const list=getCityList(ctr);
-  const opts=list.map(c=>`<option value="${c}"${selectedVal===c?' selected':''}>${c}</option>`).join('');
-  return `<select id="${id}"><option value="">선택...</option>${opts}<option value="__custom__">✏️ 직접 입력</option></select><input type="text" id="${id}_custom" placeholder="도시명 입력..." style="display:none;margin-top:4px">`;
+  const d=getFavLoc();
+  const favs=d.ctrs||[];
+  const favOpts=favs.map(c=>`<option value="${c}"${selectedVal===c?' selected':''}>${c}</option>`).join('');
+  const hasFavs=favs.length>0;
+  return `<select id="${id}" onchange="${onchange}">
+    <option value="">국가 선택 또는 직접 입력...</option>
+    ${hasFavs?'<optgroup label="⭐ 즐겨찾기">'+favOpts+'</optgroup>':''}
+    <option value="__custom__">✏️ 직접 입력</option>
+  </select>
+  <input type="text" id="${id}_custom" placeholder="국가명을 입력하세요 (예: 한국, 일본, 미국)" style="display:none;margin-top:6px;width:100%;background:var(--sf);border:1px solid var(--bd2);border-radius:var(--rs);padding:9px 12px;color:var(--tx);font-size:14px;font-family:'Noto Serif KR',serif;outline:none;">`;
 }
 
-function onCtrCustomInput(selId){/* live update handled on save */}
+function mkCitySelect(id,ctr,selectedVal){
+  const d=getFavLoc();
+  const favs=ctr?(d.cities[ctr]||[]):[];
+  const favOpts=favs.map(c=>`<option value="${c}"${selectedVal===c?' selected':''}>${c}</option>`).join('');
+  const hasFavs=favs.length>0;
+  if(!ctr)return`<select id="${id}"><option value="">국가를 먼저 선택하세요</option></select><input type="text" id="${id}_custom" style="display:none;margin-top:6px;width:100%;background:var(--sf);border:1px solid var(--bd2);border-radius:var(--rs);padding:9px 12px;color:var(--tx);font-size:14px;font-family:'Noto Serif KR',serif;outline:none;" placeholder="도시명 입력...">`;
+  return `<select id="${id}">
+    <option value="">도시 선택 또는 직접 입력...</option>
+    ${hasFavs?'<optgroup label="⭐ 즐겨찾기">'+favOpts+'</optgroup>':''}
+    <option value="__custom__">✏️ 직접 입력</option>
+  </select>
+  <input type="text" id="${id}_custom" placeholder="도시명을 입력하세요 (예: 서울, 도쿄, 뉴욕)" style="display:none;margin-top:6px;width:100%;background:var(--sf);border:1px solid var(--bd2);border-radius:var(--rs);padding:9px 12px;color:var(--tx);font-size:14px;font-family:'Noto Serif KR',serif;outline:none;">`;
+}
 
 function handleCtrChange(selId,citySelId){
   const sel=document.getElementById(selId);
   const customInp=document.getElementById(selId+'_custom');
-  if(sel.value==='__custom__'){sel.style.display='none';customInp.style.display='block';customInp.focus();}
-  else{sel.style.display='block';customInp.style.display='none';}
-  // update city dropdown
-  const ctr=sel.value==='__custom__'?customInp.value:sel.value;
+  if(!sel)return;
+  if(sel.value==='__custom__'){sel.style.display='none';if(customInp){customInp.style.display='block';customInp.focus();}}
+  else{sel.style.display='';if(customInp)customInp.style.display='none';}
+  const ctr=sel.value==='__custom__'?(customInp?customInp.value.trim():''):sel.value;
+  // 도시 드롭다운 갱신
   const cs=document.getElementById(citySelId);
   if(!cs)return;
-  const cityHtml=mkCitySelect(citySelId,ctr,'');
-  // replace only the city select container content
   const wrapper=cs.closest('.fgp');
   if(wrapper){
     const label=wrapper.querySelector('label');
+    const cityHtml=mkCitySelect(citySelId,ctr,'');
     wrapper.innerHTML='';
     if(label)wrapper.appendChild(label);
     wrapper.insertAdjacentHTML('beforeend',cityHtml);
-    document.getElementById(citySelId).addEventListener('change',()=>handleCityChange(citySelId));
+    const newSel=document.getElementById(citySelId);
+    if(newSel)newSel.addEventListener('change',()=>handleCityChange(citySelId));
   }
 }
 
 function handleCityChange(selId){
   const sel=document.getElementById(selId);
   const customInp=document.getElementById(selId+'_custom');
-  if(!sel||!customInp)return;
-  if(sel.value==='__custom__'){sel.style.display='none';customInp.style.display='block';customInp.focus();}
-  else{sel.style.display='block';customInp.style.display='none';}
+  if(!sel)return;
+  if(sel.value==='__custom__'){sel.style.display='none';if(customInp){customInp.style.display='block';customInp.focus();}}
+  else{sel.style.display='';if(customInp)customInp.style.display='none';}
 }
 
 function getLocVal(selId){
   const sel=document.getElementById(selId);
   const customInp=document.getElementById(selId+'_custom');
   if(!sel)return'';
-  if(sel.value==='__custom__'||sel.style.display==='none')return customInp?customInp.value.trim():'';
+  if(sel.style.display==='none')return customInp?customInp.value.trim():'';
+  if(sel.value==='__custom__')return customInp?customInp.value.trim():'';
   return sel.value;
 }
 
@@ -822,7 +880,7 @@ async function saveEntry(type){
   const entry={id:Date.now(),type,movie:curMovie,addedAt:new Date().toISOString()};
   if(type==='watched'){
     entry.date=document.getElementById('fDate')?.value||'';entry.platform=document.getElementById('fPf')?.value||'';
-    entry.withWho=document.getElementById('fWith')?.value||'';const _ctr=getLocVal('fCtr');const _cit=getLocVal('fCit');entry.watchCountry=_ctr;entry.watchCity=_cit;if(_ctr&&_cit)saveCustomLoc(_ctr,_cit);entry.rating=curRating;entry.review=document.getElementById('fRev')?.value||'';
+    entry.withWho=document.getElementById('fWith')?.value||'';const _ctr=getLocVal('fCtr');const _cit=getLocVal('fCit');entry.watchCountry=_ctr;entry.watchCity=_cit;if(_ctr)saveFavLoc(_ctr,_cit||null);entry.rating=curRating;entry.review=document.getElementById('fRev')?.value||'';entry.rewatch=document.getElementById('fRewatch')?.checked||false;
     const before=diary.length;diary=diary.filter(e=>!(e.type==='wishlist'&&e.movie.title===curMovie.title));
     if(diary.length<before)showToast('♥ 위시리스트에서 자동 제거');
   }else{entry.memo=document.getElementById('fMemo')?.value||'';}
@@ -868,7 +926,7 @@ function renderDiary(){
           <span class="di-bdg ${isW?'wl':'w'}" style="flex-shrink:0">${isW?'위시':'관람완료'}</span>
         </div>
         ${(m.genre||[]).length?`<div class="di-genres" style="margin-top:6px">${(m.genre||[]).slice(0,4).map(g=>`<span class="di-gt">${g}</span>`).join('')}</div>`:''}
-        ${e.review?`<div class="di-rev">"${e.review}"</div>`:e.memo?`<div class="di-rev">${e.memo}</div>`:''}
+        ${e.rewatch?'<div style="font-size:11px;color:var(--gold);margin-top:4px;display:flex;align-items:center;gap:4px"><span>🔁</span><span>다시 보고 싶은 영화</span></div>':''}${e.review?`<div class="di-rev">"${e.review}"</div>`:e.memo?`<div class="di-rev">${e.memo}</div>`:''}
       </div>
     </div>`;
   }).join('');
@@ -922,7 +980,8 @@ function renderEF(id){
     <div class="fgp"><label>국가</label>${mkCtrSelect('eFCtr',e.watchCountry||'','handleCtrChange(\'eFCtr\',\'eFCit\')')}</div>
     <div class="fgp"><label>도시</label>${mkCitySelect('eFCit',e.watchCountry||'',e.watchCity||'')}</div>
     <div class="fgp" style="grid-column:1/-1"><label>별점</label><div class="stars" id="eSt">${[1,2,3,4,5].map(i=>`<span class="star" onclick="setER(${i},${id})" onmouseover="hovER(${i})" onmouseout="renER(${id})" style="color:${i<=_editRating?'var(--gold)':'var(--tx3)'}">★</span>`).join('')}</div></div>
-    <div class="fgp" style="grid-column:1/-1"><label>감상평</label><textarea id="eFRev" placeholder="감상평 ...">${e.review||''}</textarea></div>`
+    <div class="fgp" style="grid-column:1/-1"><label>감상평</label><textarea id="eFRev" placeholder="감상평 ...">${e.review||''}</textarea></div>
+    <div class="fgp" style="grid-column:1/-1"><label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:14px"><input type="checkbox" id="eFRewatch" ${e.rewatch?'checked':''} style="width:17px;height:17px;accent-color:var(--gold);cursor:pointer;flex-shrink:0"><span>🔁 다시 보고 싶은 영화</span></label></div>\`
   :`<div class="fgp" style="grid-column:1/-1"><label>메모</label><textarea id="eFMemo" placeholder="메모 ...">${e.memo||''}</textarea></div>`;
   document.getElementById('mCon').innerHTML=`
     <div class="modal-tabs">
@@ -946,7 +1005,7 @@ function renER(id){document.querySelectorAll('#eSt .star').forEach((s,i)=>{s.sty
 async function saveEF(id){
   const e=diary.find(d=>d.id===id);if(!e)return;
   const isW=e.type==='wishlist';
-  if(!isW){e.date=document.getElementById('eFDate')?.value||e.date;e.platform=document.getElementById('eFPf')?.value||'';e.withWho=document.getElementById('eFWith')?.value||'';const eCtr=getLocVal('eFCtr');const eCit=getLocVal('eFCit');e.watchCountry=eCtr;e.watchCity=eCit;if(eCtr&&eCit)saveCustomLoc(eCtr,eCit);e.rating=_editRating;e.review=document.getElementById('eFRev')?.value||'';}
+  if(!isW){e.date=document.getElementById('eFDate')?.value||e.date;e.platform=document.getElementById('eFPf')?.value||'';e.withWho=document.getElementById('eFWith')?.value||'';const eCtr=getLocVal('eFCtr');const eCit=getLocVal('eFCit');e.watchCountry=eCtr;e.watchCity=eCit;if(eCtr&&eCit)saveCustomLoc(eCtr,eCit);e.rating=_editRating;e.review=document.getElementById('eFRev')?.value||'';e.rewatch=document.getElementById('eFRewatch')?.checked||false;}
   else{e.memo=document.getElementById('eFMemo')?.value||'';}
   e.extra=document.getElementById('eFEx')?.value||'';
   updHdr();closeMD();renderDiary();renderStats();showToast('✅ 수정 완료!');
@@ -995,14 +1054,8 @@ function renderStats(){
   document.getElementById('st-loc').innerHTML=`<div class="ssh">내가 관람한 지역</div>
     ${cE.length?`<div class="locs">${cE.map(([ct,d])=>{const mc=Math.max(...Object.values(d.c),1);const cities=Object.entries(d.c).sort((a,b)=>b[1]-a[1]);return`<div class="lcb"><div class="lch"><div class="lcfl">${FLAGS[ct]||'🌍'}</div><div class="lcnm">${ct}</div><div class="lccn">${d.t}편</div></div><div class="lcci">${cities.map(([ci,n])=>`<div class="lcr"><div class="lcrl">${ci}</div><div class="lcrt"><div class="lcrb" style="width:${Math.round(n/mc*100)}%"></div></div><div class="lcrc">${n}</div></div>`).join('')}</div></div>`;}).join('')}</div>`:'<div class="nd">관람 위치를 입력하면 여기에 표시됩니다.</div>'}`;
 
-  /* 장르 도넛 */
-  const bG={};watched.forEach(e=>(e.movie.genre||[]).forEach(g=>{bG[g]=(bG[g]||0)+1;}));
-  const gE=Object.entries(bG).sort((a,b)=>b[1]-a[1]);const tG=gE.reduce((s,[,v])=>s+v,0)||1;
-  document.getElementById('st-genre').innerHTML=`<div class="ssh">장르별 관람 분포</div>
-    ${gE.length?`<div class="dsec">
-      <div class="dc"><div class="dc-tit">장르 분포</div><div class="dw">${mkDonut(gE.slice(0,8).map(([l,v],i)=>({l,v,c:DC[i%DC.length]})),tG)}<div class="dleg">${gE.slice(0,8).map(([l,v],i)=>`<div class="dli"><div class="dld" style="background:${DC[i%DC.length]}"></div><div class="dll">${l}</div><div class="dlv">${v}</div><div class="dlp">${Math.round(v/tG*100)}%</div></div>`).join('')}</div></div></div>
-      <div class="dc"><div class="dc-tit">장르 순위</div><div class="bl">${gE.map(([l,v])=>`<div class="br"><div class="brl">${l}</div><div class="brt"><div class="brf" style="width:${Math.round(v/gE[0][1]*100)}%"></div></div><div class="brv">${v}편</div></div>`).join('')}</div></div>
-    </div>`:'<div class="nd">데이터가 없습니다.</div>'}`;
+  // 장르 통계 제거됨
+  if(document.getElementById('st-genre'))document.getElementById('st-genre').innerHTML='';
 
   /* 플랫폼 도넛 */
   const bP={};watched.forEach(e=>{if(e.platform)bP[e.platform]=(bP[e.platform]||0)+1;});
@@ -1021,6 +1074,52 @@ function mkDonut(items,total){
 }
 
 function updHdr(){document.getElementById('hw').textContent=diary.filter(e=>e.type==='watched').length;document.getElementById('hwl').textContent=diary.filter(e=>e.type==='wishlist').length;}
+
+function exportCSV(filter){
+  const data=filter==='all'?diary:diary.filter(e=>e.type===filter);
+  if(!data.length){const m=document.getElementById('csv-msg');if(m)m.innerHTML='<span style="color:var(--tx3)">내보낼 데이터가 없습니다.</span>';return;}
+  const ESC=v=>'"'+String(v||'').replace(/"/g,'""')+'"';
+  const header=['ID','타입','추가일','관람날짜','플랫폼','함께본사람','관람국가','관람도시','별점','감상평','추가메모','메모','영화제목(한국어)','영화제목(영어)','개봉연도','감독','장르','제작국가','러닝타임(분)','줄거리','출연진','다시보고싶음'];
+  const rows=data.map(e=>[
+    e.id,ESC(e.type==='watched'?'관람완료':'보고싶어요'),ESC(e.addedAt),ESC(e.date),
+    ESC(e.platform),ESC(e.withWho),ESC(e.watchCountry),ESC(e.watchCity),
+    e.rating||'',ESC(e.review),ESC(e.extra),ESC(e.memo),
+    ESC(e.movie.title),ESC(e.movie.title_en),ESC(e.movie.year),ESC(e.movie.director),
+    ESC((e.movie.genre||[]).join('/')),ESC(e.movie.country),ESC(e.movie.runtime),
+    ESC(e.movie.synopsis),ESC((e.movie.cast||[]).join('/')),
+    e.rewatch?'예':'아니오'
+  ].join(','));
+  const csv='﻿'+header.join(',')+'
+'+rows.join('
+');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const now=new Date();
+  const ds=now.getFullYear()+''+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0');
+  a.href=url;a.download='CineDiary_'+ds+'.csv';document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1000);
+  const m=document.getElementById('csv-msg');
+  if(m)m.innerHTML='<span style="color:var(--grn)">✅ '+data.length+'편 내보내기 완료!</span>';
+}
+
+async function testSheetConnection(){
+  const el=document.getElementById('sheet-sync-status');
+  if(!cfgOk()){if(el)el.innerHTML='<span style="color:var(--red)">❌ CONFIG에 SHEET_ID가 설정되지 않았습니다.</span>';return;}
+  if(el)el.innerHTML='🔄 연결 테스트 중...';
+  try{
+    const tok=await getToken();
+    const r=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+CONFIG.SHEET_ID+'?fields=properties.title',{headers:{Authorization:'Bearer '+tok}});
+    if(r.ok){
+      const d=await r.json();
+      if(el)el.innerHTML='<span style="color:var(--grn)">✅ 연결 성공! 스프레드시트: <strong>'+d.properties.title+'</strong><br><span style="font-size:12px;color:var(--tx2)">데이터가 구글 서버에 안전하게 저장됩니다.</span></span>';
+    } else {
+      if(el)el.innerHTML='<span style="color:var(--red)">❌ 연결 실패 ('+r.status+'). API 설정을 확인해주세요.</span>';
+    }
+  }catch(e){
+    if(el)el.innerHTML='<span style="color:var(--red)">❌ 오류: '+e.message+'</span>';
+  }
+}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
 
 init();
@@ -1028,7 +1127,7 @@ init();
 <script>
 // 좌우 스크롤 완전 차단
 (function(){
- var startX=0, startY=0;
+  var startX=0, startY=0;
   document.addEventListener('touchstart',function(e){
     startX=e.touches[0].clientX;
     startY=e.touches[0].clientY;
