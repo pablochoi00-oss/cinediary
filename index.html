@@ -732,8 +732,7 @@ async function saveEntry(type){
 }
 
 /* DIARY TIMELINE */
-function renderDiary()
-
+function renderDiary(){
   const list=document.getElementById('dList');
   const items=curFilter==='all'?diary:diary.filter(e=>e.type===curFilter);
   if(!items.length){list.innerHTML='<div class="empty"><div class="ic">🎞</div><p>기록된 영화가 없습니다.<br>영화를 검색해서 첫 기록을 남겨보세요!</p></div>';return;}
