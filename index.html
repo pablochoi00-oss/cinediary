@@ -611,13 +611,15 @@ async function getToken(){
   const h=b64u(JSON.stringify({alg:'RS256',typ:'JWT'}));
   const c=b64u(JSON.stringify({iss:CONFIG.CLIENT_EMAIL,scope:'https://www.googleapis.com/auth/spreadsheets',aud:'https://oauth2.googleapis.com/token',exp:now+3600,iat:now}));
   const si=`${h}.${c}`;
-  const pk=CONFIG.PRIVATE_KEY.replace(/-----BEGIN.*?-----|-----END.*?-----|\n|\r/g,'');
+  const pk=CONFIG.PRIVATE_KEY.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----/g,'').replace(/\\n/g,'').replace(/[^A-Za-z0-9+\/=]/g,'').trim();
   const kd=Uint8Array.from(atob(pk),c=>c.charCodeAt(0));
   const ck=await crypto.subtle.importKey('pkcs8',kd,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['sign']);
   const sb=await crypto.subtle.sign('RSASSA-PKCS1-v1_5',ck,new TextEncoder().encode(si));
   const sigBytes=new Uint8Array(sb);let sigStr='';for(let i=0;i<sigBytes.length;i++)sigStr+=String.fromCharCode(sigBytes[i]);const sig=btoa(sigStr).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
   const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${si}.${sig}`});
-  const d=await r.json();_tok=d.access_token;_texp=Date.now()+(d.expires_in||3600)*1000;return _tok;
+  const d=await r.json();
+  if(!d.access_token){console.error('Token error:',JSON.stringify(d));throw new Error('Token error: '+(d.error_description||d.error||'unknown'));}
+  _tok=d.access_token;_texp=Date.now()+(d.expires_in||3600)*1000;return _tok;
 }
 const cfgOk=()=>CONFIG.SHEET_ID&&!CONFIG.SHEET_ID.includes('여기에');
 async function loadSheets(){
@@ -1060,8 +1062,8 @@ function renderStats(){
   const pE=Object.entries(bP).sort((a,b)=>b[1]-a[1]);const tP=pE.reduce((s,[,v])=>s+v,0)||1;
   document.getElementById('st-platform').innerHTML=`<div class="ssh">플랫폼별 관람 현황</div>
     ${pE.length?`<div class="dsec">
-      <div class="dc"><div class="dc-tit">플랫폼 분포</div><div class="dw">${mkDonut(pE.slice(0,8).map(([l,v],i)=>({l,v,c:DC[i%DC.length]})),tP)}<div class="dleg">${pE.slice(0,8).map(([l,v],i)=>`<div class="dli"><div class="dld" style="background:${DC[i%DC.length]}"></div><div class="dll">${l}</div><div class="dlv">${v}</div><div class="dlp">${Math.round(v/tP*100)}%</div></div>`).join('')}</div></div></div>
-      <div class="dc"><div class="dc-tit">플랫폼 순위</div><div class="bl">${pE.map(([l,v])=>`<div class="br"><div class="brl">${l}</div><div class="brt"><div class="brf" style="width:${Math.round(v/pE[0][1]*100)}%"></div></div><div class="brv">${v}편</div></div>`).join('')}</div></div>
+      <div class="dc"><div class="dc-tit">플랫폼 분포</div><div class="dw">${mkDonut(pE.slice(0,8).map(([l,v],i)=>({l,v,c:DC[i%DC.length]})),tP)}<div class="dleg">${pE.slice(0,8).map(([l,v],i)=>`<div class="dli" onclick="showStatList('platform','${l}',null)" style="cursor:pointer"><div class="dld" style="background:${DC[i%DC.length]}"></div><div class="dll">${l}</div><div class="dlv">${v}</div><div class="dlp">${Math.round(v/tP*100)}%</div></div>`).join('')}</div></div></div>
+      <div class="dc"><div class="dc-tit">플랫폼 순위</div><div class="bl">${pE.map(([l,v])=>`<div class="br" onclick="showStatList('platform','${l}',null)" style="cursor:pointer"><div class="brl">${l}</div><div class="brt"><div class="brf" style="width:${Math.round(v/pE[0][1]*100)}%"></div></div><div class="brv">${v}편 ›</div></div>`).join('')}</div></div>
     </div>`:'<div class="nd">데이터가 없습니다.</div>'}`;
 }
 
@@ -1119,25 +1121,19 @@ async function testSheetConnection(){
 
 /* STAT LIST MODAL */
 function showStatList(type,a,b){
-  let title='',items=[];
   const watched=diary.filter(e=>e.type==='watched');
-  if(type==='year'){
-    title=`${a}년 관람 영화`;
-    items=watched.filter(e=>{const dt=e.date||(e.addedAt||'').slice(0,10);return dt.startsWith(a);});
-  } else if(type==='month'){
-    const moMap={'1월':1,'2월':2,'3월':3,'4월':4,'5월':5,'6월':6,'7월':7,'8월':8,'9월':9,'10월':10,'11월':11,'12월':12};
-    const moNum=moMap[b]||0;
-    title=`${a}년 ${b} 관람 영화`;
-    items=watched.filter(e=>{const dt=e.date||(e.addedAt||'').slice(0,10);const p=dt.split('-');return p[0]===a&&parseInt(p[1])===moNum;});
-  } else if(type==='country'){
-    title=`${a} 관람 영화`;
-    items=watched.filter(e=>e.watchCountry===a);
-  } else if(type==='city'){
-    title=`${a} · ${b} 관람 영화`;
-    items=watched.filter(e=>e.watchCountry===a&&(e.watchCity||'기타')===b);
-  }
+  let title='',items=[];
+  if(type==='year'){title=`${a}년 관람 영화`;items=watched.filter(e=>(e.date||(e.addedAt||'').slice(0,10)).startsWith(a));}
+  else if(type==='month'){const moMap={'1월':1,'2월':2,'3월':3,'4월':4,'5월':5,'6월':6,'7월':7,'8월':8,'9월':9,'10월':10,'11월':11,'12월':12};const mn=moMap[b]||0;title=`${a}년 ${b} 관람 영화`;items=watched.filter(e=>{const p=(e.date||(e.addedAt||'').slice(0,10)).split('-');return p[0]===a&&parseInt(p[1])===mn;});}
+  else if(type==='country'){title=`${a} 관람 영화`;items=watched.filter(e=>e.watchCountry===a);}
+  else if(type==='city'){title=`${a} ${b} 관람 영화`;items=watched.filter(e=>e.watchCountry===a&&(e.watchCity||'기타')===b);}
+  else if(type==='platform'){title=`${a} 관람 영화`;items=watched.filter(e=>e.platform===a);}
   if(!items.length){showToast('해당 항목에 영화가 없습니다.');return;}
-  const html=`<div style="padding:4px 0 8px"><div style="font-family:'Playfair Display',serif;font-style:italic;font-size:18px;color:var(--gold);margin-bottom:16px">${title}</div><div style="font-size:13px;color:var(--tx2);margin-bottom:14px">${items.length}편</div>${items.map(e=>{const m=e.movie;const stars=e.rating?'★'.repeat(e.rating):'';const poster=m.poster?`<img src="https://image.tmdb.org/t/p/w92${m.poster}" style="width:40px;height:60px;object-fit:cover;border-radius:5px;flex-shrink:0" onerror="this.style.display='none'">`:'<div style="width:40px;height:60px;background:var(--sf3);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px">🎬</div>';return`<div onclick="closeMD();showDetail(${e.id})" style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--bd);cursor:pointer">${poster}<div style="flex:1;min-width:0"><div style="font-weight:500;font-size:14px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.title}</div><div style="font-size:12px;color:var(--tx2);margin-top:2px">${m.year||''}${m.year&&m.country?' · ':''}${m.country||''}</div>${stars?`<div style="color:var(--gold);font-size:12px;margin-top:2px">${stars}</div>`:''}<div style="font-size:11px;color:var(--tx3);margin-top:2px">${e.date||''}</div></div></div>`}).join('')}</div>`;
+  const grpByY={};
+  items.forEach(e=>{const yr=(e.date||(e.addedAt||'').slice(0,10)).slice(0,4)||'미상';if(!grpByY[yr])grpByY[yr]=[];grpByY[yr].push(e);});
+  const yrKeys=Object.keys(grpByY).sort((a,b)=>b.localeCompare(a));
+  const rc=e=>{const m=e.movie;const st=e.rating?'★'.repeat(e.rating):'';const loc=e.watchCity?`📍${e.watchCountry}·${e.watchCity}`:e.watchCountry?`📍${e.watchCountry}`:'';const po=m.poster?`<img src="https://image.tmdb.org/t/p/w92${m.poster}" style="width:38px;height:57px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display='none'">`:'<div style="width:38px;height:57px;background:var(--sf3);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center">🎬</div>';return`<div onclick="closeMD();setTimeout(()=>showDetail(${e.id}),80)" style="display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--bd);cursor:pointer">${po}<div style="flex:1;min-width:0"><div style="font-weight:500;font-size:14px;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.title}</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">${m.year||''}${m.year&&m.country?' · ':''}${m.country||''}</div>${st?`<div style="color:var(--gold);font-size:11px;margin-top:1px">${st}</div>`:''}<div style="font-size:11px;color:var(--tx3);margin-top:1px">${e.date||''}${e.date&&loc?' ':''} ${loc}</div></div></div>`;};
+  const html=`<div><div style="font-family:'Playfair Display',serif;font-style:italic;font-size:18px;color:var(--gold);margin-bottom:4px">${title}</div><div style="font-size:12px;color:var(--tx3);margin-bottom:14px">${items.length}편</div>${yrKeys.map(yr=>`<div style="margin-bottom:4px"><div style="font-size:12px;font-weight:600;color:var(--tx2);padding:5px 0 4px;border-bottom:1px solid var(--bd2)">${yr}년 <span style="font-weight:400;color:var(--tx3)">${grpByY[yr].length}편</span></div>${grpByY[yr].map(rc).join('')}</div>`).join('')}</div>`;
   document.getElementById('mCon').innerHTML=html;
   document.getElementById('mBg').classList.add('open');
 }
