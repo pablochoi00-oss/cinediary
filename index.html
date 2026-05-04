@@ -518,9 +518,7 @@ main{padding:22px 20px;max-width:960px;margin:0 auto;overflow-x:hidden;}
 <script>
 /* ★★★ CONFIG ★★★ */
 const CONFIG={
-  SHEET_ID:'1_UV-2lLVis8tRmN2S7LqIJqkCjjSxl0XFPAwN4hTjkM',
-  CLIENT_EMAIL:'cinediary@cinediary.iam.gserviceaccount.com',
-  PRIVATE_KEY:'-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCoCHmiUIIBGVYU\nAqcaXfeH0O48sYzNwW5yb9HHTL+8re47ZLm03HMXUBNCymD4vYeA3Hwvvg+56r9N\nXhKGxkmFEy0jza3wizKjIpR8VSPBSfspvQHgbjEr2P/HOCisMXjNE2RtB4bx33d8\n0o5wHe73CV/b2W1cLWRrG7U4AwCfpGq/Sq09gCZceLQGyjnUnasYnL0i+SoPUtM4\n34ZMiBm67WVc573a/qg6fP4ik+tZDIiidjHztWklLBVGrkVGVKLcqHT997WoYD4l\nY4i9WEYKOQ4byMKfDHiymqc+4Y+N5WWd3L7U/KlOVj4s1Us3BfRMazYgpwbnhWSK\n0t5cw3tbAgMBAAECggEAR09Fc11QNrAuaBKSIO304OYJXKeK1jz7JsSOldJb4nI7\n0mfWKcuOajvY2LTzP0yLp2OqrkYt/VwCsI42NY0L4VY4h2O/qAAizrmbo0IsiNhh\nJx7nn3uUEYQnVD/gfucF2Z4bteuGWLpZxpbCzRDe+2a2kCHvN7mpzoy1NN6NUrHv\nSUaE8vVf1sHCIK59xpDKVjWlOEuy8WmbhwMeMugmyvP/nXjKhAC+wsbM7giVZdTJ\n5IVWKW0xM1S9boqVDhFFCNNjAIS03s04Yy7n7fS6/WO75/E+wx9sIM1RqNAHSRa5\n/KQKdf3A67ODQusX9SKfMAYvZSRqGaUQPjRY3RU8VQKBgQDYlL52ZKAEj4w8UR/f\ncemxxLfyYznPBbEd2gc39B58CH5Nse0YOuLCPDUHoHPUfZtes+1XfH/Gx/jTrko8\nsW+xzoV3GcX4S3mv7+Ej26KMj9+B/8vJ8LRD4UNL+62RWJ1W8mqip+Z9VFHtlZbP\n2ZTIN7+jJGJMss7LQ3rHPSHQHQKBgQDGnbdUpG89o2WQITR+mHO6OxxcNB21bLs8\n2a/RcK1PAb8UMYbShIQfgeLrLwbswbIDEnivGwAO7R9LOtOya+wPc8J3P7jMW2Bd\ntPKN7QCW+6StH81SjOJv5joKYHZjgv/f/YbNAzfOSgJWEEHDskilfJcSZ6LTyN81\nwwdWsxwP1wKBgFdYzeOzu3F7b0RYN3GHYIeoXcNsz0C1+/OdHfIsCytcxYuSKZvv\nC8roOz7jMDPPoJy2Fg+Fj4bc2XaNwTTvHqvoLZ2WEGiOD/qr1PIAP3NPBwZH4qmD\n4T/LFrgLPbnzsikBxY3qByQeoJggD12uU7nX+frSzq4+IvaJNXgrKHrlAoGAd38Q\nfCZqn0Udp/eyY7BJgHRr/bWFYlBG3reCJpqKSwyb8ARUP3hnHaXB5wnmOq/W8C4+\n2et+v3w+5b5A/AoefrWA/Moj3x/i/L4PaQB86FoCm/6UQ+RroDN+HBwpXnnEhPk+\nDz6uZrj0at9hEeLD/nzVT8d2mcEzOl9anPkqGwUCgYAXVUtnJyXtSMThLnsdltNl\nJYP82/G5qYG0/xW2bkaeMy4cNmaF+lgeUrRtdC4fAJykBnQ2L3V9PoRyEObSRxi1\nvDeXEzJ+Athja+nNVRbzJw2MM6oYPom9Xzvem4PwqnzkBdDLlIFj7TVSiOyPjFqE\nhykHXVB1ONCYAUTHmxmQeg==\n-----END PRIVATE KEY-----\n',
+  SCRIPT_URL:'https://script.google.com/macros/s/AKfycbxK8PmJ5WoaDFmRHyfQHwn8XWI8AIKCRNUkyOoset-sez7gnV0d0I9rNbUoVisaRn_n/exec',
   TMDB_API_KEY:'f7d45547cbfc88c2d3f942e941cc8777'
 };
 /* ★★★★★★★★★ */
@@ -603,25 +601,56 @@ function mkFilm(el){const n=Math.ceil(window.innerWidth/28)+2;for(let i=0;i<n;i+
 mkFilm(document.getElementById('sft'));mkFilm(document.getElementById('sfb'));
 function hideSplash(){const s=document.getElementById('splash'),a=document.getElementById('app');s.classList.add('fade-out');setTimeout(()=>{s.style.display='none';a.classList.add('visible');},900);}
 
-/* JWT - 자산관리 앱 동일 방식 */
-let _tok=null,_texp=0;
-async function getToken(){
-  if(_tok&&Date.now()<_texp-60000)return _tok;
-  const now=Math.floor(Date.now()/1000);
-  const b64=s=>btoa(unescape(encodeURIComponent(JSON.stringify(s)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-  const u=b64({alg:'RS256',typ:'JWT'})+'.'+b64({iss:CONFIG.CLIENT_EMAIL,scope:'https://www.googleapis.com/auth/spreadsheets',aud:'https://oauth2.googleapis.com/token',exp:now+3600,iat:now});
-  const pem=CONFIG.PRIVATE_KEY.replace(/-----[^-]+-----/g,'').replace(/\\n/g,'').replace(/[^A-Za-z0-9+\/=]/g,'');
-  const k=await crypto.subtle.importKey('pkcs8',Uint8Array.from(atob(pem),c=>c.charCodeAt(0)),{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['sign']);
-  const sig=await crypto.subtle.sign({name:'RSASSA-PKCS1-v1_5'},k,new TextEncoder().encode(u));
-  const sigBytes=new Uint8Array(sig);let sigStr='';for(let i=0;i<sigBytes.length;i++)sigStr+=String.fromCharCode(sigBytes[i]);
-  const jwt=u+'.'+btoa(sigStr).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-  const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`});
-  const d=await r.json();
-  if(!d.access_token)throw new Error('Token failed: '+(d.error_description||d.error||JSON.stringify(d)));
-  _tok=d.access_token;_texp=Date.now()+(d.expires_in||3600)*1000;return _tok;
+/* API */
+const cfgOk=()=>CONFIG.SCRIPT_URL&&!CONFIG.SCRIPT_URL.includes('여기에');
+
+async function apiCall(body){
+  if(!cfgOk()){setSS('error','설정 필요');return null;}
+  const r=await fetch(CONFIG.SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error('API '+r.status);
+  return r.json();
 }
 
-const cfgOk=()=>CONFIG.SHEET_ID&&!CONFIG.SHEET_ID.includes('여기에');
+async function loadSheets(){
+  setSS('syncing','불러오는 중...');
+  try{
+    const d=await apiCall({action:'load'});
+    if(!d){try{const ls=localStorage.getItem('cd_bak');if(ls)diary=JSON.parse(ls);}catch(e){}return;}
+    diary=(d.rows||[]).map(row=>({id:parseInt(row[0])||Date.now(),type:row[1]||'watched',addedAt:row[2]||'',date:row[3]||'',platform:row[4]||'',withWho:row[5]||'',watchCountry:row[6]||'',watchCity:row[7]||'',rating:parseInt(row[8])||0,review:row[9]||'',extra:row[10]||'',memo:row[11]||'',rewatch:row[22]==='TRUE'||row[22]===true,movie:{title:row[12]||'',title_en:row[13]||'',year:row[14]||'',director:row[15]||'',genre:row[16]?row[16].split(','):[],country:row[17]||'',runtime:row[18]||'',poster:row[19]||'',synopsis:row[20]||'',cast:row[21]?row[21].split(','):[]}}));
+    setSS('ok','동기화됨');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_e){}
+  }catch(e){console.error(e);setSS('error','불러오기 실패');try{const ls=localStorage.getItem('cd_bak');if(ls)diary=JSON.parse(ls);}catch(e2){}}
+}
+
+async function saveSheet(entry){
+  if(!cfgOk()){try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(e){}return;}
+  setSS('syncing','저장 중...');
+  try{
+    const m=entry.movie;
+    const row=[entry.id,entry.type,entry.addedAt,entry.date||'',entry.platform||'',entry.withWho||'',entry.watchCountry||'',entry.watchCity||'',entry.rating||0,entry.review||'',entry.extra||'',entry.memo||'',m.title,m.title_en||'',m.year||'',m.director||'',(m.genre||[]).join(','),m.country||'',m.runtime||'',m.poster||'',m.synopsis||'',(m.cast||[]).join(','),entry.rewatch?'TRUE':'FALSE'];
+    await apiCall({action:'save',row});
+    setSS('ok','저장됨');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_e){}
+  }catch(e){console.error(e);setSS('error','저장 실패');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(e2){}}
+}
+
+async function deleteSheet(id){
+  if(!cfgOk())return;setSS('syncing','삭제 중...');
+  try{
+    await apiCall({action:'delete',id});
+    setSS('ok','동기화됨');
+  }catch(e){console.error(e);setSS('error','삭제 실패');}
+}
+
+async function updateSheet(entry){
+  if(!cfgOk()){try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(e){}return;}
+  setSS('syncing','수정 중...');
+  try{
+    const m=entry.movie;
+    const row=[entry.id,entry.type,entry.addedAt,entry.date||'',entry.platform||'',entry.withWho||'',entry.watchCountry||'',entry.watchCity||'',entry.rating||0,entry.review||'',entry.extra||'',entry.memo||'',m.title,m.title_en||'',m.year||'',m.director||'',(m.genre||[]).join(','),m.country||'',m.runtime||'',m.poster||'',m.synopsis||'',(m.cast||[]).join(','),entry.rewatch?'TRUE':'FALSE'];
+    await apiCall({action:'update',id:entry.id,row});
+    setSS('ok','저장됨');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_e){}
+  }catch(e){console.error(e);setSS('error','수정 실패');}
+}
+
 async function loadSheets(){
   if(!cfgOk()){setSS('error','설정 필요');try{const ls=localStorage.getItem('cd_bak');if(ls)diary=JSON.parse(ls);}catch(e){}return;}
   setSS('syncing','불러오는 중...');
@@ -630,7 +659,7 @@ async function loadSheets(){
     const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${SN}!A2:W?majorDimension=ROWS`,{headers:{Authorization:`Bearer ${tok}`}});
     const d=await r.json();
     diary=(d.values||[]).map(row=>({id:parseInt(row[0])||Date.now(),type:row[1]||'watched',addedAt:row[2]||'',date:row[3]||'',platform:row[4]||'',withWho:row[5]||'',watchCountry:row[6]||'',watchCity:row[7]||'',rating:parseInt(row[8])||0,review:row[9]||'',extra:row[10]||'',memo:row[11]||'',rewatch:row[22]==='TRUE'||row[22]==='true'||row[22]===true,movie:{title:row[12]||'',title_en:row[13]||'',year:row[14]||'',director:row[15]||'',genre:row[16]?row[16].split(','):[],country:row[17]||'',runtime:row[18]||'',synopsis:row[20]||'',cast:row[21]?row[21].split(','):[]}})).filter(e=>e.movie.title);
-    setSS('ok','동기화됨');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_e){}
+    setSS('ok','동기화됨');
   }catch(e){console.error(e);setSS('error','불러오기 실패');try{const ls=localStorage.getItem('cd_bak');if(ls)diary=JSON.parse(ls);}catch(e2){}}
 }
 async function saveSheet(entry){
@@ -639,9 +668,8 @@ async function saveSheet(entry){
   try{
     const tok=await getToken();const m=entry.movie;
     const row=[entry.id,entry.type,entry.addedAt,entry.date||'',entry.platform||'',entry.withWho||'',entry.watchCountry||'',entry.watchCity||'',entry.rating||0,entry.review||'',entry.extra||'',entry.memo||'',m.title,m.title_en||'',m.year||'',m.director||'',(m.genre||[]).join(','),m.country||'',m.runtime||'','',m.synopsis||'',(m.cast||[]).join(','),entry.rewatch?'TRUE':'FALSE'];
-    const _sr=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${SN}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({values:[row]})});
-    if(!_sr.ok){const _ej=await _sr.json().catch(()=>({}));console.error('Sheets err',_ej);setSS('error','저장실패:'+(_ej.error?.message||_sr.status));try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_x){}return;}
-    setSS('ok','저장됨');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_e){}
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${SN}!A:W:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({values:[row]})});
+    setSS('ok','저장됨');
   }catch(e){console.error(e);setSS('error','저장 실패');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(e2){}}
 }
 async function deleteSheet(id){
