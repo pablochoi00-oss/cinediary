@@ -447,18 +447,16 @@ main{padding:22px 20px;max-width:960px;margin:0 auto;overflow-x:hidden;}
       <div class="stabs">
         <button class="stab active" onclick="showST('year',this)">📅 연도별</button>
         <button class="stab" onclick="showST('loc',this)">📍 관람 지역</button>
-        <button class="stab" onclick="showST('genre',this)">🎭 장르</button>
         <button class="stab" onclick="showST('platform',this)">📺 플랫폼</button>
       </div>
       <div class="ssec active" id="st-year"></div>
       <div class="ssec" id="st-loc"></div>
-      
+      <div class="ssec" id="st-genre" style="display:none"></div>
       <div class="ssec" id="st-platform"></div>
     </div>
     <!-- SETTINGS -->
     <div class="sec" id="tab-settings">
       <div class="ptit">앱 <em>설정</em></div>
-      <div class="psub">API 키 및 데이터 연동 설정</div>
 
       <div class="set-card">
         <div class="set-hd">🎬 TMDB API 키 <span id="tmdb-status-dot" class="set-dot"></span></div>
@@ -470,46 +468,23 @@ main{padding:22px 20px;max-width:960px;margin:0 auto;overflow-x:hidden;}
           <div class="set-step"><span class="set-num">4</span><span>아래 입력창에 붙여넣기 후 저장</span></div>
         </div>
         <div class="set-inp-row">
-          <input type="text" id="tmdb-key-input" placeholder="예: a1b2c3d4e5f6..." style="flex:1;background:var(--sf);border:1px solid var(--bd2);border-radius:var(--rs);padding:10px 13px;color:var(--tx);font-size:13px;font-family:'Noto Serif KR',serif;outline:none;"/>
-          <button onclick="saveTmdbKey()" style="padding:10px 16px;background:var(--gold);color:var(--bg);border:none;border-radius:var(--rs);font-size:13px;font-family:'Noto Serif KR',serif;cursor:pointer;white-space:nowrap;">저장</button>
+          <input type="text" id="tmdb-key-input" placeholder="예: a1b2c3d4e5f6..." style="flex:1;background:var(--sf);border:1px solid var(--bd2);border-radius:var(--rs);padding:10px 13px;color:var(--tx);font-size:13px;outline:none;"/>
+          <button onclick="saveTmdbKey()" style="padding:10px 16px;background:var(--gold);color:var(--bg);border:none;border-radius:var(--rs);font-size:13px;cursor:pointer;white-space:nowrap;">저장</button>
         </div>
         <div id="tmdb-key-msg" style="font-size:12px;margin-top:7px;color:var(--tx3)"></div>
         <a href="https://www.themoviedb.org/settings/api" target="_blank" style="display:inline-block;margin-top:10px;font-size:12px;color:var(--gold);text-decoration:none;">→ TMDB API 설정 페이지 열기</a>
       </div>
 
       <div class="set-card" style="margin-top:14px">
-        <div class="set-hd">🗒️ 앱 아이콘 업데이트 방법</div>
-        <div class="set-desc" style="line-height:1.9">홈화면 아이콘 디자인이 변경되었을 때:<br>
-        <span style="color:var(--tx3);font-size:12px">
-          ① 홈화면에서 CineDiary 아이콘 꾹 누르기 → <strong style="color:var(--tx2)">북마크 삭제</strong><br>
-          ② Safari에서 파일 다시 열기<br>
-          ③ 하단 공유버튼(□↑) → <strong style="color:var(--tx2)">홈 화면에 추가</strong>
-        </span></div>
-      </div>
-
-      <div class="set-card" style="margin-top:14px">
         <div class="set-hd">📤 데이터 내보내기 (CSV)</div>
-        <div class="set-desc">내 모든 관람 기록을 CSV 파일로 저장합니다. 엑셀, 구글 스프레드시트에서 열 수 있습니다.</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button onclick="exportCSV('all')" style="padding:10px 16px;background:var(--gold);color:var(--bg);border:none;border-radius:var(--rs);font-size:13px;font-family:'Noto Serif KR',serif;cursor:pointer;">📥 전체 내보내기</button>
-          <button onclick="exportCSV('watched')" style="padding:10px 16px;background:var(--sf2);color:var(--tx);border:1px solid var(--bd2);border-radius:var(--rs);font-size:13px;font-family:'Noto Serif KR',serif;cursor:pointer;">관람완료만</button>
-          <button onclick="exportCSV('wishlist')" style="padding:10px 16px;background:var(--sf2);color:var(--tx);border:1px solid var(--bd2);border-radius:var(--rs);font-size:13px;font-family:'Noto Serif KR',serif;cursor:pointer;">보고싶어요만</button>
+        <div class="set-desc">내 모든 관람 기록을 CSV 파일로 저장합니다.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button onclick="exportCSV('all')" style="padding:10px 16px;background:var(--gold);color:var(--bg);border:none;border-radius:var(--rs);font-size:13px;cursor:pointer;">📥 전체 내보내기</button>
+          <button onclick="exportCSV('watched')" style="padding:10px 16px;background:var(--sf2);color:var(--tx);border:1px solid var(--bd2);border-radius:var(--rs);font-size:13px;cursor:pointer;">관람완료만</button>
+          <button onclick="exportCSV('wishlist')" style="padding:10px 16px;background:var(--sf2);color:var(--tx);border:1px solid var(--bd2);border-radius:var(--rs);font-size:13px;cursor:pointer;">보고싶어요만</button>
         </div>
-        <div id="csv-msg" style="font-size:12px;margin-top:8px;color:var(--tx3)"></div>
-      </div>
-
-      <div class="set-card" style="margin-top:14px">
-        <div class="set-hd">☁️ 구글 시트 클라우드 동기화</div>
-        <div class="set-desc" style="line-height:1.8">
-          구글 시트가 설정되면 <strong>폰을 바꿔도, 앱을 삭제해도</strong> 데이터가 구글 서버에 안전하게 보관됩니다.<br>
-          <span style="color:var(--tx3);font-size:12px">CONFIG의 SHEET_ID, CLIENT_EMAIL, PRIVATE_KEY를 설정하면 자동 동기화됩니다.</span>
-        </div>
-        <div id="sheet-sync-status" style="margin-top:8px;font-size:13px"></div>
-        <button onclick="testSheetConnection()" style="margin-top:10px;padding:10px 16px;background:var(--sf2);color:var(--tx);border:1px solid var(--bd2);border-radius:var(--rs);font-size:13px;font-family:'Noto Serif KR',serif;cursor:pointer;">🔗 구글 시트 연결 테스트</button>
       </div>
     </div>
-  </main>
-</div>
 
 <!-- MODAL -->
 <div class="mbg" id="mBg" onclick="closeM(event)"><div class="modal" id="mCon"></div></div>
@@ -518,7 +493,7 @@ main{padding:22px 20px;max-width:960px;margin:0 auto;overflow-x:hidden;}
 <script>
 /* ★★★ CONFIG ★★★ */
 const CONFIG={
-  SCRIPT_URL:'https://script.google.com/macros/s/AKfycbxK8PmJ5WoaDFmRHyfQHwn8XWI8AIKCRNUkyOoset-sez7gnV0d0I9rNbUoVisaRn_n/exec',
+  SCRIPT_URL:'https://script.google.com/macros/s/AKfycbxkDSO_uFUjfNaWCMHi7NLJ_gCnTnAtVW_1I6_sK7GkC17j0G_cPDvQdaLXtDLLicJn/exec',
   TMDB_API_KEY:'f7d45547cbfc88c2d3f942e941cc8777'
 };
 /* ★★★★★★★★★ */
@@ -602,91 +577,47 @@ mkFilm(document.getElementById('sft'));mkFilm(document.getElementById('sfb'));
 function hideSplash(){const s=document.getElementById('splash'),a=document.getElementById('app');s.classList.add('fade-out');setTimeout(()=>{s.style.display='none';a.classList.add('visible');},900);}
 
 /* API */
+let _tok=null,_texp=0;
 const cfgOk=()=>CONFIG.SCRIPT_URL&&!CONFIG.SCRIPT_URL.includes('여기에');
-
-async function apiCall(body){
-  if(!cfgOk()){setSS('error','설정 필요');return null;}
-  const r=await fetch(CONFIG.SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body)});
-  if(!r.ok)throw new Error('API '+r.status);
-  return r.json();
-}
-
 async function loadSheets(){
   setSS('syncing','불러오는 중...');
   try{
-    const d=await apiCall({action:'load'});
-    if(!d){try{const ls=localStorage.getItem('cd_bak');if(ls)diary=JSON.parse(ls);}catch(e){}return;}
+    if(!cfgOk()){setSS('error','설정 필요');try{const ls=localStorage.getItem('cd_bak');if(ls)diary=JSON.parse(ls);}catch(e){}return;}
+    const r=await fetch(CONFIG.SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'load'})});
+    const d=await r.json();
     diary=(d.rows||[]).map(row=>({id:parseInt(row[0])||Date.now(),type:row[1]||'watched',addedAt:row[2]||'',date:row[3]||'',platform:row[4]||'',withWho:row[5]||'',watchCountry:row[6]||'',watchCity:row[7]||'',rating:parseInt(row[8])||0,review:row[9]||'',extra:row[10]||'',memo:row[11]||'',rewatch:row[22]==='TRUE'||row[22]===true,movie:{title:row[12]||'',title_en:row[13]||'',year:row[14]||'',director:row[15]||'',genre:row[16]?row[16].split(','):[],country:row[17]||'',runtime:row[18]||'',poster:row[19]||'',synopsis:row[20]||'',cast:row[21]?row[21].split(','):[]}}));
     setSS('ok','동기화됨');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_e){}
   }catch(e){console.error(e);setSS('error','불러오기 실패');try{const ls=localStorage.getItem('cd_bak');if(ls)diary=JSON.parse(ls);}catch(e2){}}
 }
-
 async function saveSheet(entry){
   if(!cfgOk()){try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(e){}return;}
   setSS('syncing','저장 중...');
   try{
     const m=entry.movie;
     const row=[entry.id,entry.type,entry.addedAt,entry.date||'',entry.platform||'',entry.withWho||'',entry.watchCountry||'',entry.watchCity||'',entry.rating||0,entry.review||'',entry.extra||'',entry.memo||'',m.title,m.title_en||'',m.year||'',m.director||'',(m.genre||[]).join(','),m.country||'',m.runtime||'',m.poster||'',m.synopsis||'',(m.cast||[]).join(','),entry.rewatch?'TRUE':'FALSE'];
-    await apiCall({action:'save',row});
+    const r=await fetch(CONFIG.SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'save',row})});
+    const d=await r.json();
     setSS('ok','저장됨');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_e){}
   }catch(e){console.error(e);setSS('error','저장 실패');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(e2){}}
 }
-
 async function deleteSheet(id){
-  if(!cfgOk())return;setSS('syncing','삭제 중...');
+  if(!cfgOk())return;
+  setSS('syncing','삭제 중...');
   try{
-    await apiCall({action:'delete',id});
+    await fetch(CONFIG.SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'delete',id})});
     setSS('ok','동기화됨');
   }catch(e){console.error(e);setSS('error','삭제 실패');}
 }
-
 async function updateSheet(entry){
   if(!cfgOk()){try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(e){}return;}
   setSS('syncing','수정 중...');
   try{
     const m=entry.movie;
     const row=[entry.id,entry.type,entry.addedAt,entry.date||'',entry.platform||'',entry.withWho||'',entry.watchCountry||'',entry.watchCity||'',entry.rating||0,entry.review||'',entry.extra||'',entry.memo||'',m.title,m.title_en||'',m.year||'',m.director||'',(m.genre||[]).join(','),m.country||'',m.runtime||'',m.poster||'',m.synopsis||'',(m.cast||[]).join(','),entry.rewatch?'TRUE':'FALSE'];
-    await apiCall({action:'update',id:entry.id,row});
+    await fetch(CONFIG.SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update',id:entry.id,row})});
     setSS('ok','저장됨');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_e){}
   }catch(e){console.error(e);setSS('error','수정 실패');}
 }
-
-async function loadSheets(){
-  if(!cfgOk()){setSS('error','설정 필요');try{const ls=localStorage.getItem('cd_bak');if(ls)diary=JSON.parse(ls);}catch(e){}return;}
-  setSS('syncing','불러오는 중...');
-  try{
-    const tok=await getToken();
-    const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${SN}!A2:W?majorDimension=ROWS`,{headers:{Authorization:`Bearer ${tok}`}});
-    const d=await r.json();
-    diary=(d.values||[]).map(row=>({id:parseInt(row[0])||Date.now(),type:row[1]||'watched',addedAt:row[2]||'',date:row[3]||'',platform:row[4]||'',withWho:row[5]||'',watchCountry:row[6]||'',watchCity:row[7]||'',rating:parseInt(row[8])||0,review:row[9]||'',extra:row[10]||'',memo:row[11]||'',rewatch:row[22]==='TRUE'||row[22]==='true'||row[22]===true,movie:{title:row[12]||'',title_en:row[13]||'',year:row[14]||'',director:row[15]||'',genre:row[16]?row[16].split(','):[],country:row[17]||'',runtime:row[18]||'',synopsis:row[20]||'',cast:row[21]?row[21].split(','):[]}})).filter(e=>e.movie.title);
-    setSS('ok','동기화됨');
-  }catch(e){console.error(e);setSS('error','불러오기 실패');try{const ls=localStorage.getItem('cd_bak');if(ls)diary=JSON.parse(ls);}catch(e2){}}
-}
-async function saveSheet(entry){
-  if(!cfgOk()){try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(e){}return;}
-  setSS('syncing','저장 중...');
-  try{
-    const tok=await getToken();const m=entry.movie;
-    const row=[entry.id,entry.type,entry.addedAt,entry.date||'',entry.platform||'',entry.withWho||'',entry.watchCountry||'',entry.watchCity||'',entry.rating||0,entry.review||'',entry.extra||'',entry.memo||'',m.title,m.title_en||'',m.year||'',m.director||'',(m.genre||[]).join(','),m.country||'',m.runtime||'','',m.synopsis||'',(m.cast||[]).join(','),entry.rewatch?'TRUE':'FALSE'];
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${SN}!A:W:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({values:[row]})});
-    setSS('ok','저장됨');
-  }catch(e){console.error(e);setSS('error','저장 실패');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(e2){}}
-}
-async function deleteSheet(id){
-  if(!cfgOk())return;setSS('syncing','삭제 중...');
-  try{
-    const tok=await getToken();
-    const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${SN}!A:A`,{headers:{Authorization:`Bearer ${tok}`}});
-    const d=await r.json();const rows=d.values||[];let ri=-1;
-    for(let i=1;i<rows.length;i++){if(parseInt(rows[i][0])===id){ri=i;break;}}
-    if(ri<0){setSS('ok','동기화됨');return;}
-    const sm=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}?fields=sheets.properties`,{headers:{Authorization:`Bearer ${tok}`}});
-    const sd=await sm.json();const shId=sd.sheets[0].properties.sheetId;
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}:batchUpdate`,{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({requests:[{deleteDimension:{range:{sheetId:shId,dimension:'ROWS',startIndex:ri,endIndex:ri+1}}}]})});
-    setSS('ok','동기화됨');
-  }catch(e){console.error(e);setSS('error','삭제 오류');}
-}
-async function updateSheet(entry){await deleteSheet(entry.id);await saveSheet(entry);}
 function setSS(s,t){const d=document.getElementById('synd'),tx=document.getElementById('synt');if(d){d.className='synd';if(s!=='ok')d.classList.add(s);}if(tx)tx.textContent=t;}
 
 /* INIT */
@@ -1072,8 +1003,8 @@ function renderStats(){
     <div class="ytl">${years.map(([yr,d])=>{
       const activeMonths=d.m.map((cnt,i)=>cnt>0?{m:MN[i],cnt}:null).filter(Boolean);
       return`<div class="yb">
-        <div class="yb-hdr"><div class="yb-yr">${yr}</div><div class="yb-bw"><div class="yb-bf" style="width:${Math.round(d.t/maxY*100)}%"></div></div><div class="yb-cn">${d.t}편</div></div>
-        <div class="yb-mlist">${activeMonths.length?activeMonths.map(({m,cnt})=>`<div class="yml"><span class="yml-m">${m}</span><div class="yml-bar"><div class="yml-bf" style="width:${Math.round(cnt/Math.max(...d.m)*100)}%"></div></div><span class="yml-n">${cnt}편</span></div>`).join(''):'<div style="font-size:12px;color:var(--tx3);padding:8px 0">월별 날짜 미입력</div>'}</div>
+        <div class="yb-hdr" onclick="showStatList('year',String(yr),null)" style="cursor:pointer"><div class="yb-yr">${yr}</div><div class="yb-bw"><div class="yb-bf" style="width:${Math.round(d.t/maxY*100)}%"></div></div><div class="yb-cn">${d.t}편</div></div>
+        <div class="yb-mlist">${activeMonths.length?activeMonths.map(({m,cnt})=>`<div class="yml" onclick="showStatList('month',String(yr),m)" style="cursor:pointer"><span class="yml-m">${m}</span><div class="yml-bar"><div class="yml-bf" style="width:${Math.round(cnt/Math.max(...d.m)*100)}%"></div></div><span class="yml-n">${cnt}편 ›</span></div>`).join(''):'<div style="font-size:12px;color:var(--tx3);padding:8px 0">월별 날짜 미입력</div>'}</div>
       </div>`;
     }).join('')}${!years.length?'<div class="nd">관람 기록을 추가하면 여기에 표시됩니다.</div>':''}</div>`;
 
@@ -1082,7 +1013,7 @@ function renderStats(){
   watched.forEach(e=>{if(e.watchCountry){if(!bC[e.watchCountry])bC[e.watchCountry]={t:0,c:{}};bC[e.watchCountry].t++;const ct=e.watchCity||'기타';bC[e.watchCountry].c[ct]=(bC[e.watchCountry].c[ct]||0)+1;}});
   const cE=Object.entries(bC).sort((a,b)=>b[1].t-a[1].t);
   document.getElementById('st-loc').innerHTML=`<div class="ssh">내가 관람한 지역</div>
-    ${cE.length?`<div class="locs">${cE.map(([ct,d])=>{const mc=Math.max(...Object.values(d.c),1);const cities=Object.entries(d.c).sort((a,b)=>b[1]-a[1]);return`<div class="lcb"><div class="lch"><div class="lcfl">${FLAGS[ct]||'🌍'}</div><div class="lcnm">${ct}</div><div class="lccn">${d.t}편</div></div><div class="lcci">${cities.map(([ci,n])=>`<div class="lcr"><div class="lcrl">${ci}</div><div class="lcrt"><div class="lcrb" style="width:${Math.round(n/mc*100)}%"></div></div><div class="lcrc">${n}</div></div>`).join('')}</div></div>`;}).join('')}</div>`:'<div class="nd">관람 위치를 입력하면 여기에 표시됩니다.</div>'}`;
+    ${cE.length?`<div class="locs">${cE.map(([ct,d])=>{const mc=Math.max(...Object.values(d.c),1);const cities=Object.entries(d.c).sort((a,b)=>b[1]-a[1]);return`<div class="lcb"><div class="lch" onclick="showStatList(\'country\',ct,null)" style="cursor:pointer"><div class="lcfl">${FLAGS[ct]||'🌍'}</div><div class="lcnm">${ct}</div><div class="lccn">${d.t}편</div></div><div class="lcci">${cities.map(([ci,n])=>`<div class="lcr" onclick="showStatList('city',ct,ci)" style="cursor:pointer"><div class="lcrl">${ci}</div><div class="lcrt"><div class="lcrb" style="width:${Math.round(n/mc*100)}%"></div></div><div class="lcrc">${n} ›</div></div>`).join('')}</div></div>`;}).join('')}</div>`:'<div class="nd">관람 위치를 입력하면 여기에 표시됩니다.</div>'}`;
 
   // 장르 통계 제거됨
   if(document.getElementById('st-genre'))document.getElementById('st-genre').innerHTML='';
@@ -1162,7 +1093,7 @@ function showStatList(type,a,b){
   const grpByY={};
   items.forEach(e=>{const yr=(e.date||(e.addedAt||'').slice(0,10)).slice(0,4)||'미상';if(!grpByY[yr])grpByY[yr]=[];grpByY[yr].push(e);});
   const yrKeys=Object.keys(grpByY).sort((a,b)=>b.localeCompare(a));
-  const rc=e=>{const m=e.movie;const st=e.rating?'★'.repeat(e.rating):'';const loc=e.watchCity?`📍${e.watchCountry}·${e.watchCity}`:e.watchCountry?`📍${e.watchCountry}`:'';const po=m.poster?`<img src="https://image.tmdb.org/t/p/w92${m.poster}" style="width:38px;height:57px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display='none'">`:'<div style="width:38px;height:57px;background:var(--sf3);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center">🎬</div>';return`<div onclick="closeMD();setTimeout(()=>showDetail(${e.id}),80)" style="display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--bd);cursor:pointer">${po}<div style="flex:1;min-width:0"><div style="font-weight:500;font-size:14px;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.title}</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">${m.year||''}${m.year&&m.country?' · ':''}${m.country||''}</div>${st?`<div style="color:var(--gold);font-size:11px;margin-top:1px">${st}</div>`:''}<div style="font-size:11px;color:var(--tx3);margin-top:1px">${e.date||''}${e.date&&loc?' ':''} ${loc}</div></div></div>`;};
+  const rc=e=>{const m=e.movie;const st=e.rating?'★'.repeat(e.rating):'';const loc=e.watchCity?`📍${e.watchCountry}·${e.watchCity}`:e.watchCountry?`📍${e.watchCountry}`:'';const po=m.poster?`<img src="https://image.tmdb.org/t/p/w92${m.poster}" style="width:38px;height:57px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display='none'">`:'<div style="width:38px;height:57px;background:var(--sf3);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center">🎬</div>';return`<div onclick="closeMD();setTimeout(()=>showDetail(${e.id}),80)" style="display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--bd);cursor:pointer">${po}<div style="flex:1;min-width:0"><div style="font-weight:500;font-size:14px;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.title}</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">${m.year||''}${m.year&&m.country?' · ':''}${m.country||''}</div>${st?`<div style="color:var(--gold);font-size:11px;margin-top:1px">${st}</div>`:''}<div style="font-size:11px;color:var(--tx3);margin-top:1px">${e.date||''} ${loc}</div></div></div>`;};
   const html=`<div><div style="font-family:'Playfair Display',serif;font-style:italic;font-size:18px;color:var(--gold);margin-bottom:4px">${title}</div><div style="font-size:12px;color:var(--tx3);margin-bottom:14px">${items.length}편</div>${yrKeys.map(yr=>`<div style="margin-bottom:4px"><div style="font-size:12px;font-weight:600;color:var(--tx2);padding:5px 0 4px;border-bottom:1px solid var(--bd2)">${yr}년 <span style="font-weight:400;color:var(--tx3)">${grpByY[yr].length}편</span></div>${grpByY[yr].map(rc).join('')}</div>`).join('')}</div>`;
   document.getElementById('mCon').innerHTML=html;
   document.getElementById('mBg').classList.add('open');
