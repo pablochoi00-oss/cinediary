@@ -447,6 +447,7 @@ main{padding:22px 20px;max-width:960px;margin:0 auto;overflow-x:hidden;}
       <div class="stabs">
         <button class="stab active" onclick="showST('year',this)">📅 연도별</button>
         <button class="stab" onclick="showST('loc',this)">📍 관람 지역</button>
+        <button class="stab" onclick="showST('genre',this)">🎭 장르</button>
         <button class="stab" onclick="showST('platform',this)">📺 플랫폼</button>
       </div>
       <div class="ssec active" id="st-year"></div>
@@ -602,25 +603,24 @@ function mkFilm(el){const n=Math.ceil(window.innerWidth/28)+2;for(let i=0;i<n;i+
 mkFilm(document.getElementById('sft'));mkFilm(document.getElementById('sfb'));
 function hideSplash(){const s=document.getElementById('splash'),a=document.getElementById('app');s.classList.add('fade-out');setTimeout(()=>{s.style.display='none';a.classList.add('visible');},900);}
 
-/* JWT */
+/* JWT - 자산관리 앱 동일 방식 */
 let _tok=null,_texp=0;
 async function getToken(){
   if(_tok&&Date.now()<_texp-60000)return _tok;
   const now=Math.floor(Date.now()/1000);
-  const b64u=s=>{const bytes=new TextEncoder().encode(s);let bin='';for(let i=0;i<bytes.length;i++)bin+=String.fromCharCode(bytes[i]);return btoa(bin).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');};
-  const h=b64u(JSON.stringify({alg:'RS256',typ:'JWT'}));
-  const c=b64u(JSON.stringify({iss:CONFIG.CLIENT_EMAIL,scope:'https://www.googleapis.com/auth/spreadsheets',aud:'https://oauth2.googleapis.com/token',exp:now+3600,iat:now}));
-  const si=`${h}.${c}`;
-  const pk=CONFIG.PRIVATE_KEY.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----/g,'').replace(/\\n/g,'').replace(/[^A-Za-z0-9+\/=]/g,'').trim();
-  const kd=Uint8Array.from(atob(pk),c=>c.charCodeAt(0));
-  const ck=await crypto.subtle.importKey('pkcs8',kd,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['sign']);
-  const sb=await crypto.subtle.sign('RSASSA-PKCS1-v1_5',ck,new TextEncoder().encode(si));
-  const sigBytes=new Uint8Array(sb);let sigStr='';for(let i=0;i<sigBytes.length;i++)sigStr+=String.fromCharCode(sigBytes[i]);const sig=btoa(sigStr).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
-  const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${si}.${sig}`});
+  const b64=s=>btoa(unescape(encodeURIComponent(JSON.stringify(s)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  const u=b64({alg:'RS256',typ:'JWT'})+'.'+b64({iss:CONFIG.CLIENT_EMAIL,scope:'https://www.googleapis.com/auth/spreadsheets',aud:'https://oauth2.googleapis.com/token',exp:now+3600,iat:now});
+  const pem=CONFIG.PRIVATE_KEY.replace(/-----[^-]+-----/g,'').replace(/\\n/g,'').replace(/[^A-Za-z0-9+\/=]/g,'');
+  const k=await crypto.subtle.importKey('pkcs8',Uint8Array.from(atob(pem),c=>c.charCodeAt(0)),{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['sign']);
+  const sig=await crypto.subtle.sign({name:'RSASSA-PKCS1-v1_5'},k,new TextEncoder().encode(u));
+  const sigBytes=new Uint8Array(sig);let sigStr='';for(let i=0;i<sigBytes.length;i++)sigStr+=String.fromCharCode(sigBytes[i]);
+  const jwt=u+'.'+btoa(sigStr).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`});
   const d=await r.json();
-  if(!d.access_token){console.error('Token error:',JSON.stringify(d));throw new Error('Token error: '+(d.error_description||d.error||'unknown'));}
+  if(!d.access_token)throw new Error('Token failed: '+(d.error_description||d.error||JSON.stringify(d)));
   _tok=d.access_token;_texp=Date.now()+(d.expires_in||3600)*1000;return _tok;
 }
+
 const cfgOk=()=>CONFIG.SHEET_ID&&!CONFIG.SHEET_ID.includes('여기에');
 async function loadSheets(){
   if(!cfgOk()){setSS('error','설정 필요');try{const ls=localStorage.getItem('cd_bak');if(ls)diary=JSON.parse(ls);}catch(e){}return;}
@@ -640,7 +640,7 @@ async function saveSheet(entry){
     const tok=await getToken();const m=entry.movie;
     const row=[entry.id,entry.type,entry.addedAt,entry.date||'',entry.platform||'',entry.withWho||'',entry.watchCountry||'',entry.watchCity||'',entry.rating||0,entry.review||'',entry.extra||'',entry.memo||'',m.title,m.title_en||'',m.year||'',m.director||'',(m.genre||[]).join(','),m.country||'',m.runtime||'','',m.synopsis||'',(m.cast||[]).join(','),entry.rewatch?'TRUE':'FALSE'];
     const _sr=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${SN}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,{method:'POST',headers:{Authorization:`Bearer ${tok}`,'Content-Type':'application/json'},body:JSON.stringify({values:[row]})});
-    if(!_sr.ok){const _ej=await _sr.json().catch(()=>({}));console.error('Sheets append error',_ej);setSS('error','저장 실패');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_x){}return;}
+    if(!_sr.ok){const _ej=await _sr.json().catch(()=>({}));console.error('Sheets err',_ej);setSS('error','저장실패:'+(_ej.error?.message||_sr.status));try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_x){}return;}
     setSS('ok','저장됨');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_e){}
   }catch(e){console.error(e);setSS('error','저장 실패');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(e2){}}
 }
@@ -664,7 +664,7 @@ function setSS(s,t){const d=document.getElementById('synd'),tx=document.getEleme
 /* INIT */
 async function init(){
   loadTheme();const t0=Date.now();
-  try{await loadSheets();}catch(e){console.error("init loadSheets error",e);}
+  try{await loadSheets();}catch(e){console.error("init error",e);}
   renderDiary();renderStats();updHdr();
   setTimeout(hideSplash,Math.max(0,3200-(Date.now()-t0)));
 }
@@ -1044,8 +1044,8 @@ function renderStats(){
     <div class="ytl">${years.map(([yr,d])=>{
       const activeMonths=d.m.map((cnt,i)=>cnt>0?{m:MN[i],cnt}:null).filter(Boolean);
       return`<div class="yb">
-        <div class="yb-hdr" onclick="showStatList('year','${yr}',null)" style="cursor:pointer"><div class="yb-yr">${yr}</div><div class="yb-bw"><div class="yb-bf" style="width:${Math.round(d.t/maxY*100)}%"></div></div><div class="yb-cn">${d.t}편 ›</div></div>
-        <div class="yb-mlist">${activeMonths.length?activeMonths.map(({m,cnt})=>`<div class="yml" onclick="showStatList('month','${yr}','${m}')" style="cursor:pointer"><span class="yml-m">${m}</span><div class="yml-bar"><div class="yml-bf" style="width:${Math.round(cnt/Math.max(...d.m)*100)}%"></div></div><span class="yml-n">${cnt}편 ›</span></div>`).join(''):'<div style="font-size:12px;color:var(--tx3);padding:8px 0">월별 날짜 미입력</div>'}</div>
+        <div class="yb-hdr"><div class="yb-yr">${yr}</div><div class="yb-bw"><div class="yb-bf" style="width:${Math.round(d.t/maxY*100)}%"></div></div><div class="yb-cn">${d.t}편</div></div>
+        <div class="yb-mlist">${activeMonths.length?activeMonths.map(({m,cnt})=>`<div class="yml"><span class="yml-m">${m}</span><div class="yml-bar"><div class="yml-bf" style="width:${Math.round(cnt/Math.max(...d.m)*100)}%"></div></div><span class="yml-n">${cnt}편</span></div>`).join(''):'<div style="font-size:12px;color:var(--tx3);padding:8px 0">월별 날짜 미입력</div>'}</div>
       </div>`;
     }).join('')}${!years.length?'<div class="nd">관람 기록을 추가하면 여기에 표시됩니다.</div>':''}</div>`;
 
@@ -1054,15 +1054,17 @@ function renderStats(){
   watched.forEach(e=>{if(e.watchCountry){if(!bC[e.watchCountry])bC[e.watchCountry]={t:0,c:{}};bC[e.watchCountry].t++;const ct=e.watchCity||'기타';bC[e.watchCountry].c[ct]=(bC[e.watchCountry].c[ct]||0)+1;}});
   const cE=Object.entries(bC).sort((a,b)=>b[1].t-a[1].t);
   document.getElementById('st-loc').innerHTML=`<div class="ssh">내가 관람한 지역</div>
-    ${cE.length?`<div class="locs">${cE.map(([ct,d])=>{const mc=Math.max(...Object.values(d.c),1);const cities=Object.entries(d.c).sort((a,b)=>b[1]-a[1]);return`<div class="lcb"><div class="lch" onclick="showStatList('country','${ct}',null)" style="cursor:pointer"><div class="lcfl">${FLAGS[ct]||'🌍'}</div><div class="lcnm">${ct}</div><div class="lccn">${d.t}편 ›</div></div><div class="lcci">${cities.map(([ci,n])=>`<div class="lcr" onclick="showStatList('city','${ct}','${ci}')" style="cursor:pointer"><div class="lcrl">${ci}</div><div class="lcrt"><div class="lcrb" style="width:${Math.round(n/mc*100)}%"></div></div><div class="lcrc">${n} ›</div></div>`).join('')}</div></div>`;}).join('')}</div>`:'<div class="nd">관람 위치를 입력하면 여기에 표시됩니다.</div>'}`;
+    ${cE.length?`<div class="locs">${cE.map(([ct,d])=>{const mc=Math.max(...Object.values(d.c),1);const cities=Object.entries(d.c).sort((a,b)=>b[1]-a[1]);return`<div class="lcb"><div class="lch"><div class="lcfl">${FLAGS[ct]||'🌍'}</div><div class="lcnm">${ct}</div><div class="lccn">${d.t}편</div></div><div class="lcci">${cities.map(([ci,n])=>`<div class="lcr"><div class="lcrl">${ci}</div><div class="lcrt"><div class="lcrb" style="width:${Math.round(n/mc*100)}%"></div></div><div class="lcrc">${n}</div></div>`).join('')}</div></div>`;}).join('')}</div>`:'<div class="nd">관람 위치를 입력하면 여기에 표시됩니다.</div>'}`;
 
+  // 장르 통계 제거됨
+  if(document.getElementById('st-genre'))document.getElementById('st-genre').innerHTML='';
 
   /* 플랫폼 도넛 */
   const bP={};watched.forEach(e=>{if(e.platform)bP[e.platform]=(bP[e.platform]||0)+1;});
   const pE=Object.entries(bP).sort((a,b)=>b[1]-a[1]);const tP=pE.reduce((s,[,v])=>s+v,0)||1;
   document.getElementById('st-platform').innerHTML=`<div class="ssh">플랫폼별 관람 현황</div>
     ${pE.length?`<div class="dsec">
-      <div class="dc"><div class="dc-tit">플랫폼 분포</div><div class="dw">${mkDonut(pE.slice(0,8).map(([l,v],i)=>({l,v,c:DC[i%DC.length]})),tP)}<div class="dleg">${pE.slice(0,8).map(([l,v],i)=>`<div class="dli" onclick="showStatList('platform','${l}',null)" style="cursor:pointer"><div class="dld" style="background:${DC[i%DC.length]}"></div><div class="dll">${l}</div><div class="dlv">${v}</div><div class="dlp">${Math.round(v/tP*100)}%</div></div>`).join('')}</div></div></div>
+      <div class="dc"><div class="dc-tit">플랫폼 분포</div><div class="dw">${mkDonut(pE.slice(0,8).map(([l,v],i)=>({l,v,c:DC[i%DC.length]})),tP)}<div class="dleg">${pE.slice(0,8).map(([l,v],i)=>`<div class="dli"><div class="dld" style="background:${DC[i%DC.length]}"></div><div class="dll">${l}</div><div class="dlv">${v}</div><div class="dlp">${Math.round(v/tP*100)}%</div></div>`).join('')}</div></div></div>
       <div class="dc"><div class="dc-tit">플랫폼 순위</div><div class="bl">${pE.map(([l,v])=>`<div class="br" onclick="showStatList('platform','${l}',null)" style="cursor:pointer"><div class="brl">${l}</div><div class="brt"><div class="brf" style="width:${Math.round(v/pE[0][1]*100)}%"></div></div><div class="brv">${v}편 ›</div></div>`).join('')}</div></div>
     </div>`:'<div class="nd">데이터가 없습니다.</div>'}`;
 }
