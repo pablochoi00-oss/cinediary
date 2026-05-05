@@ -493,7 +493,7 @@ main{padding:22px 20px;max-width:960px;margin:0 auto;overflow-x:hidden;}
 <script>
 /* ★★★ CONFIG ★★★ */
 const CONFIG={
-  SCRIPT_URL:'https://script.google.com/macros/s/AKfycbxkDSO_uFUjfNaWCMHi7NLJ_gCnTnAtVW_1I6_sK7GkC17j0G_cPDvQdaLXtDLLicJn/exec',
+  SCRIPT_URL:'https://script.google.com/macros/s/AKfycbxK8PmJ5WoaDFmRHyfQHwn8XWI8AIKCRNUkyOoset-sez7gnV0d0I9rNbUoVisaRn_n/exec',
   TMDB_API_KEY:'f7d45547cbfc88c2d3f942e941cc8777'
 };
 /* ★★★★★★★★★ */
@@ -977,55 +977,34 @@ function closeM(ev){if(ev.target===document.getElementById('mBg'))closeMD();}
 function closeMD(){document.getElementById('mBg').classList.remove('open');}
 async function delEntry(id){if(!confirm('이 기록을 삭제할까요?'))return;diary=diary.filter(e=>e.id!==id);updHdr();closeMD();renderDiary();showToast('삭제되었습니다.');try{localStorage.setItem('cd_bak',JSON.stringify(diary));}catch(_e){}await deleteSheet(id);}
 
-/* STATS */
-function renderStats(){
-  const watched=diary.filter(e=>e.type==='watched'),wish=diary.filter(e=>e.type==='wishlist');
-  document.getElementById('sth').innerHTML=`
-    <div class="stc"><div class="stc-lb">총 관람 편수</div><div class="stc-v">${watched.length}</div><div class="stc-s">편</div></div>
-    <div class="stc"><div class="stc-lb">보고싶은 목록</div><div class="stc-v">${wish.length}</div><div class="stc-s">편 대기중</div></div>`;
-
-  /* 연도+월 — 관람날짜(e.date) 기준으로 집계 */
-  const byY={};
-  watched.forEach(e=>{
-    // 관람날짜 e.date 우선, 없으면 addedAt 사용
-    const dt=e.date||(e.addedAt||'').slice(0,10);
-    const parts=dt.split('-');
-    const watchYear=parts[0]||'미상';
-    const watchMo=parseInt(parts[1])||0;
-    if(!byY[watchYear])byY[watchYear]={t:0,m:Array(12).fill(0)};
-    byY[watchYear].t++;
-    if(watchMo>=1&&watchMo<=12)byY[watchYear].m[watchMo-1]++;
-  });
-  const years=Object.entries(byY).sort((a,b)=>b[0].localeCompare(a[0]));
-  const maxY=years.length?Math.max(...years.map(x=>x[1].t)):1;
+/* STATS */function renderStats(){
+  const watched=diary.filter(e=>e.type==='watched');
   const MN=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  document.getElementById('st-year').innerHTML=`<div class="ssh">연도 · 월별 관람 현황</div>
-    <div class="ytl">${years.map(([yr,d])=>{
-      const activeMonths=d.m.map((cnt,i)=>cnt>0?{m:MN[i],cnt}:null).filter(Boolean);
-      return`<div class="yb">
-        <div class="yb-hdr" onclick="showStatList('year',String(yr),null)" style="cursor:pointer"><div class="yb-yr">${yr}</div><div class="yb-bw"><div class="yb-bf" style="width:${Math.round(d.t/maxY*100)}%"></div></div><div class="yb-cn">${d.t}편</div></div>
-        <div class="yb-mlist">${activeMonths.length?activeMonths.map(({m,cnt})=>`<div class="yml" onclick="showStatList('month',String(yr),m)" style="cursor:pointer"><span class="yml-m">${m}</span><div class="yml-bar"><div class="yml-bf" style="width:${Math.round(cnt/Math.max(...d.m)*100)}%"></div></div><span class="yml-n">${cnt}편 ›</span></div>`).join(''):'<div style="font-size:12px;color:var(--tx3);padding:8px 0">월별 날짜 미입력</div>'}</div>
-      </div>`;
-    }).join('')}${!years.length?'<div class="nd">관람 기록을 추가하면 여기에 표시됩니다.</div>':''}</div>`;
+
+  /* 연도별 통계 */
+  const yM={};
+  watched.forEach(e=>{
+    const dt=e.date||(e.addedAt||'').slice(0,10);
+    const yr=parseInt(dt.slice(0,4));if(!yr)return;
+    if(!yM[yr])yM[yr]={t:0,m:new Array(12).fill(0)};
+    yM[yr].t++;
+    const mo=parseInt(dt.slice(5,7));if(mo>=1&&mo<=12)yM[yr].m[mo-1]++;
+  });
+  const years=Object.entries(yM).sort((a,b)=>b[0]-a[0]);
+  const maxY=Math.max(...years.map(([,d])=>d.t),1);
+  document.getElementById('st-year').innerHTML=`<div class="ssh">연도 · 월별 관람 현황</div><div class="ytl">${years.map(([yr,d])=>{const activeMonths=d.m.map((cnt,i)=>cnt>0?{m:MN[i],cnt}:null).filter(Boolean);return '<div class="yb"><div class="yb-hdr" data-t="year" data-a="'+yr+'" onclick="showStatList(this.dataset.t,this.dataset.a,null)" style="cursor:pointer"><div class="yb-yr">'+yr+'</div><div class="yb-bw"><div class="yb-bf" style="width:'+Math.round(d.t/maxY*100)+'%"></div></div><div class="yb-cn">'+d.t+'편 ›</div></div><div class="yb-mlist">'+(activeMonths.length?activeMonths.map(({m,cnt})=>'<div class="yml" data-t="month" data-a="'+yr+'" data-b="'+m+'" onclick="showStatList(this.dataset.t,this.dataset.a,this.dataset.b)" style="cursor:pointer"><span class="yml-m">'+m+'</span><div class="yml-bar"><div class="yml-bf" style="width:'+Math.round(cnt/Math.max(...d.m)*100)+'%"></div></div><span class="yml-n">'+cnt+'편 ›</span></div>').join(''):'<div style="font-size:12px;color:var(--tx3);padding:8px 0">날짜 미입력</div>')+'</div></div>';}).join('')}${!years.length?'<div class="nd">관람 기록을 추가하면 표시됩니다.</div>':''}</div>`;
 
   /* 관람 지역 */
   const bC={};
-  watched.forEach(e=>{if(e.watchCountry){if(!bC[e.watchCountry])bC[e.watchCountry]={t:0,c:{}};bC[e.watchCountry].t++;const ct=e.watchCity||'기타';bC[e.watchCountry].c[ct]=(bC[e.watchCountry].c[ct]||0)+1;}});
+  watched.forEach(e=>{if(e.watchCountry){if(!bC[e.watchCountry])bC[e.watchCountry]={t:0,c:{}};bC[e.watchCountry].t++;const ci=e.watchCity||'기타';bC[e.watchCountry].c[ci]=(bC[e.watchCountry].c[ci]||0)+1;}});
   const cE=Object.entries(bC).sort((a,b)=>b[1].t-a[1].t);
-  document.getElementById('st-loc').innerHTML=`<div class="ssh">내가 관람한 지역</div>
-    ${cE.length?`<div class="locs">${cE.map(([ct,d])=>{const mc=Math.max(...Object.values(d.c),1);const cities=Object.entries(d.c).sort((a,b)=>b[1]-a[1]);return`<div class="lcb"><div class="lch" onclick="showStatList('country',ct,null)" style="cursor:pointer"><div class="lcfl">${FLAGS[ct]||'🌍'}</div><div class="lcnm">${ct}</div><div class="lccn">${d.t}편</div></div><div class="lcci">${cities.map(([ci,n])=>`<div class="lcr" onclick="showStatList('city',ct,ci)" style="cursor:pointer"><div class="lcrl">${ci}</div><div class="lcrt"><div class="lcrb" style="width:${Math.round(n/mc*100)}%"></div></div><div class="lcrc">${n} ›</div></div>`).join('')}</div></div>`;}).join('')}</div>`:'<div class="nd">관람 위치를 입력하면 여기에 표시됩니다.</div>'}`;
+  document.getElementById('st-loc').innerHTML=`<div class="ssh">내가 관람한 지역</div>${cE.length?'<div class="locs">'+cE.map(([ct,d])=>{const mc=Math.max(...Object.values(d.c),1);const cities=Object.entries(d.c).sort((a,b)=>b[1]-a[1]);return '<div class="lcb"><div class="lch" data-t="country" data-a="'+ct+'" onclick="showStatList(this.dataset.t,this.dataset.a,null)" style="cursor:pointer"><div class="lcfl">'+(FLAGS[ct]||'🌍')+'</div><div class="lcnm">'+ct+'</div><div class="lccn">'+d.t+'편 ›</div></div><div class="lcci">'+cities.map(([ci,n])=>'<div class="lcr" data-t="city" data-a="'+ct+'" data-b="'+ci+'" onclick="showStatList(this.dataset.t,this.dataset.a,this.dataset.b)" style="cursor:pointer"><div class="lcrl">'+ci+'</div><div class="lcrt"><div class="lcrb" style="width:'+Math.round(n/mc*100)+'%"></div></div><div class="lcrc">'+n+' ›</div></div>').join('')+'</div></div>';}).join('')+'</div>':'<div class="nd">관람 위치를 입력하면 표시됩니다.</div>'}`;
 
-  // 장르 통계 제거됨
-  if(document.getElementById('st-genre'))document.getElementById('st-genre').innerHTML='';
-
-  /* 플랫폼 도넛 */
+  /* 플랫폼 통계 */
   const bP={};watched.forEach(e=>{if(e.platform)bP[e.platform]=(bP[e.platform]||0)+1;});
   const pE=Object.entries(bP).sort((a,b)=>b[1]-a[1]);const tP=pE.reduce((s,[,v])=>s+v,0)||1;
-  document.getElementById('st-platform').innerHTML=`<div class="ssh">플랫폼별 관람 현황</div>
-    ${pE.length?`<div class="dsec">
-      <div class="dc"><div class="dc-tit">플랫폼 분포</div><div class="dw">${mkDonut(pE.slice(0,8).map(([l,v],i)=>({l,v,c:DC[i%DC.length]})),tP)}<div class="dleg">${pE.slice(0,8).map(([l,v],i)=>`<div class="dli"><div class="dld" style="background:${DC[i%DC.length]}"></div><div class="dll">${l}</div><div class="dlv">${v}</div><div class="dlp">${Math.round(v/tP*100)}%</div></div>`).join('')}</div></div></div>
-      <div class="dc"><div class="dc-tit">플랫폼 순위</div><div class="bl">${pE.map(([l,v])=>`<div class="br" onclick="showStatList('platform','${l}',null)" style="cursor:pointer"><div class="brl">${l}</div><div class="brt"><div class="brf" style="width:${Math.round(v/pE[0][1]*100)}%"></div></div><div class="brv">${v}편 ›</div></div>`).join('')}</div></div>
-    </div>`:'<div class="nd">데이터가 없습니다.</div>'}`;
+  const DC=['#c9a84c','#7eb8f7','#f7a07e','#7ef7b8','#f77eb8','#b87ef7','#f7e07e','#7ecff7'];
+  document.getElementById('st-platform').innerHTML=`<div class="ssh">플랫폼별 관람 현황</div>${pE.length?'<div class="dsec"><div class="dc"><div class="dc-tit">플랫폼 분포</div><div class="dw">'+mkDonut(pE.slice(0,8).map(([l,v],i)=>({l,v,c:DC[i%DC.length]})),tP)+'<div class="dleg">'+pE.slice(0,8).map(([l,v],i)=>'<div class="dli" data-t="platform" data-a="'+l+'" onclick="showStatList(this.dataset.t,this.dataset.a,null)" style="cursor:pointer"><div class="dld" style="background:'+DC[i%DC.length]+'"></div><div class="dll">'+l+'</div><div class="dlv">'+v+'</div><div class="dlp">'+Math.round(v/tP*100)+'%</div></div>').join('')+'</div></div></div><div class="dc"><div class="dc-tit">플랫폼 순위</div><div class="bl">'+pE.map(([l,v])=>'<div class="br" data-t="platform" data-a="'+l+'" onclick="showStatList(this.dataset.t,this.dataset.a,null)" style="cursor:pointer"><div class="brl">'+l+'</div><div class="brt"><div class="brf" style="width:'+Math.round(v/pE[0][1]*100)+'%"></div></div><div class="brv">'+v+'편 ›</div></div>').join('')+'</div></div></div>':'<div class="nd">데이터가 없습니다.</div>'}`;
 }
 
 function mkDonut(items,total){
@@ -1084,7 +1063,8 @@ async function testSheetConnection(){
 function showStatList(type,a,b){
   const watched=diary.filter(e=>e.type==='watched');
   let title='',items=[];
-  if(type==='year'){title=`${a}년 관람 영화`;items=watched.filter(e=>(e.date||(e.addedAt||'').slice(0,10)).startsWith(a));}
+  if(type==='wishlist'){title='보고싶은 영화';items=diary.filter(e=>e.type==='wishlist');}
+  else if(type==='year'){title=`${a}년 관람 영화`;items=watched.filter(e=>(e.date||(e.addedAt||'').slice(0,10)).startsWith(a));}
   else if(type==='month'){const moMap={'1월':1,'2월':2,'3월':3,'4월':4,'5월':5,'6월':6,'7월':7,'8월':8,'9월':9,'10월':10,'11월':11,'12월':12};const mn=moMap[b]||0;title=`${a}년 ${b} 관람 영화`;items=watched.filter(e=>{const p=(e.date||(e.addedAt||'').slice(0,10)).split('-');return p[0]===a&&parseInt(p[1])===mn;});}
   else if(type==='country'){title=`${a} 관람 영화`;items=watched.filter(e=>e.watchCountry===a);}
   else if(type==='city'){title=`${a} ${b} 관람 영화`;items=watched.filter(e=>e.watchCountry===a&&(e.watchCity||'기타')===b);}
