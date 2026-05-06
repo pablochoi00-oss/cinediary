@@ -236,7 +236,7 @@ main{padding:22px 20px;max-width:960px;margin:0 auto;overflow-x:hidden;}
 /* MODAL */
 .mbg{display:none;position:fixed;inset:0;background:var(--mbg);z-index:300;backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:18px;}
 .mbg.open{display:flex;}
-.modal{background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r);padding:24px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;animation:fdIn .25s ease;box-shadow:var(--shd);}
+.modal{background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r);max-width:560px;width:100%;max-height:90vh;display:flex;flex-direction:column;animation:fdIn .25s ease;box-shadow:var(--shd);overflow:hidden;}
 .modal-tit{font-family:'Playfair Display',serif;font-size:20px;color:var(--tx);margin-bottom:3px;}
 .modal-sub{font-size:12px;color:var(--tx2);margin-bottom:13px;}
 .dr{display:flex;gap:8px;margin-bottom:8px;font-size:13px;}
@@ -244,7 +244,8 @@ main{padding:22px 20px;max-width:960px;margin:0 auto;overflow-x:hidden;}
 .dv{color:var(--tx);font-family:'Noto Serif KR',serif;}
 .mrev{background:var(--sf2);border-radius:var(--rs);padding:11px;font-size:13px;color:var(--tx);line-height:1.8;margin:11px 0;border-left:3px solid var(--gold);font-style:italic;font-family:'Noto Serif KR',serif;}
 .mact{display:flex;gap:8px;justify-content:flex-end;margin-top:15px;flex-wrap:wrap;}
-.modal-tabs{display:flex;gap:8px;margin-bottom:15px;padding-bottom:12px;border-bottom:1px solid var(--bd);}
+.modal-tabs{display:flex;gap:8px;padding:16px 20px 12px;border-bottom:1px solid var(--bd);background:var(--sf);flex-shrink:0;}
+.modal-body{flex:1;overflow-y:auto;padding:16px 20px 20px;}
 .mtab{font-size:13px;font-family:'Noto Serif KR',serif;padding:5px 14px;border-radius:8px;cursor:pointer;border:1px solid var(--bd2);background:var(--sf2);color:var(--tx2);transition:all .2s;}
 .mtab.active{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.4);color:var(--gold);}
 
@@ -906,26 +907,33 @@ function renderDV(e){
       <button class="mtab active" onclick="renderDV(diary.find(d=>d.id===${e.id}))">📋 상세보기</button>
       <button class="mtab" onclick="renderEF(${e.id})">✏️ 수정하기</button>
     </div>
+    <div class="modal-body">
     <div class="modal-tit">${m.title}</div>
-    <div class="modal-sub">${m.title_en||''} ${m.year?'· '+m.year:''}</div>
-    <div style="margin-bottom:11px">${genres}</div>
-    <div class="dr"><span class="dl2">감독</span><span class="dv">${m.director||'-'}</span></div>
-    <div class="dr"><span class="dl2">출연</span><span class="dv">${(m.cast||[]).join(', ')||'-'}</span></div>
-    <div class="dr"><span class="dl2">제작국</span><span class="dv">${m.country||'-'}</span></div>
-    ${m.runtime?`<div class="dr"><span class="dl2">러닝타임</span><span class="dv">${m.runtime}분</span></div>`:''}
-    <div class="dr"><span class="dl2">상태</span><span class="dv"><span class="bdg ${isW?'bdg-wl':'bdg-w'}">${isW?'보고싶어요':'관람완료'}</span></span></div>
-    ${!isW?`<div class="dr"><span class="dl2">관람 날짜</span><span class="dv">${e.date||'-'}</span></div>
-    <div class="dr"><span class="dl2">플랫폼</span><span class="dv">${e.platform||'-'}</span></div>
-    <div class="dr"><span class="dl2">함께 본 사람</span><span class="dv">${e.withWho||'-'}</span></div>
-    <div class="dr"><span class="dl2">관람 위치</span><span class="dv">${loc}</span></div>
-    ${stars}${e.review?`<div class="mrev">"${e.review}"</div>`:''}`:''}
-    ${e.memo?`<div style="font-size:13px;color:var(--tx2);padding:10px;background:var(--sf2);border-radius:var(--rs);margin-top:9px;font-family:'Noto Serif KR',serif">${e.memo}</div>`:''}
-    ${e.extra?`<div class="dr" style="margin-top:8px"><span class="dl2">추가 메모</span><span class="dv">${e.extra}</span></div>`:''}
-    ${m.synopsis?`<div style="font-size:12px;color:var(--tx2);margin-top:13px;line-height:1.7;border-top:1px solid var(--bd);padding-top:11px;font-family:'Noto Serif KR',serif">${m.synopsis}</div>`:''}
-    <div class="mact">
-      ${isW?`<button class="btn btn-bl btn-sm" onclick="markW(${e.id})">✓ 관람 완료로 변경</button>`:''}
+    <div class="modal-sub">${m.title_en||''} ${m.year?'('+m.year+')':''}</div>
+    ${m.poster?`<img src="https://image.tmdb.org/t/p/w342${m.poster}" class="modal-poster" onerror="this.style.display='none'">`:''}
+    ${stars}
+    <div class="dr"><span class="drl">감독</span><span class="drv">${m.director||'-'}</span></div>
+    <div class="dr"><span class="drl">장르</span><span class="drv">${genres||'-'}</span></div>
+    <div class="dr"><span class="drl">국가</span><span class="drv">${m.country||'-'}</span></div>
+    ${m.runtime?`<div class="dr"><span class="drl">러닝타임</span><span class="drv">${m.runtime}분</span></div>`:''}
+    ${!isW?`
+    <div class="dr"><span class="drl">관람일</span><span class="drv">${e.date||'-'}</span></div>
+    <div class="dr"><span class="drl">플랫폼</span><span class="drv">${e.platform||'-'}</span></div>
+    <div class="dr"><span class="drl">동반자</span><span class="drv">${e.withWho||'-'}</span></div>
+    <div class="dr"><span class="drl">관람지역</span><span class="drv">${loc}</span></div>
+    ${e.review?`<div class="dr-full"><span class="drl">감상평</span><p class="drv-p">${e.review}</p></div>`:''}
+    ${e.extra?`<div class="dr-full"><span class="drl">한줄평</span><p class="drv-p">${e.extra}</p></div>`:''}
+    ${e.memo?`<div class="dr-full"><span class="drl">메모</span><p class="drv-p">${e.memo}</p></div>`:''}
+    ${e.rewatch?`<div class="dr"><span class="drl">재관람</span><span class="drv">🔁 다시 보고 싶음</span></div>`:''}
+    `:`${e.memo?`<div class="dr-full"><span class="drl">메모</span><p class="drv-p">${e.memo}</p></div>`:''}
+    `}
+    ${m.synopsis?`<div class="dr-full"><span class="drl">시놉시스</span><p class="drv-p">${m.synopsis}</p></div>`:''}
+    <div class="modal-acts">
+      ${!isW?`<button class="btn btn-g btn-sm" onclick="saveEF(${e.id})">💾 수정저장</button>`:''}
+      ${isW?`<button class="btn btn-g btn-sm" onclick="markW(${e.id})">✓ 관람 완료로 변경</button>`:''}
       <button class="btn btn-rd btn-sm" onclick="delEntry(${e.id})">삭제</button>
       <button class="btn btn-gh btn-sm" onclick="closeMD()">닫기</button>
+    </div>
     </div>`;
 }
 function renderEF(id){
@@ -949,11 +957,13 @@ function renderEF(id){
       <button class="mtab" onclick="renderDV(diary.find(d=>d.id===${id}))">📋 상세보기</button>
       <button class="mtab active" onclick="renderEF(${id})">✏️ 수정하기</button>
     </div>
+    <div class="modal-body">
     <div class="lf-tit" style="font-family:'Playfair Display',serif;font-size:14px;color:var(--gold);margin-bottom:13px">✏️ ${e.movie.title} 수정</div>
     <div class="fg">${wf}<div class="fgp" style="grid-column:1/-1"><label>추가 메모</label><input type="text" id="eFEx" value="${e.extra||''}" placeholder="기억하고 싶은 것 ..."/></div></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
       <button class="btn btn-gh btn-sm" onclick="closeMD()">취소</button>
       <button class="btn btn-g btn-sm" onclick="saveEF(${id})">💾 수정 저장</button>
+    </div>
     </div>`;
   setTimeout(()=>{
     const _ee=document.getElementById('eFCtr');if(_ee)_ee.addEventListener('change',()=>handleCtrChange('eFCtr','eFCit'));
