@@ -144,10 +144,10 @@ main{padding:22px 20px;max-width:960px;margin:0 auto;overflow-x:hidden;}
 .di::before{content:'';position:absolute;left:56px;top:0;bottom:0;width:1px;background:var(--bd);z-index:0;}
 .di:first-child::before{top:24px;}
 .di:last-child::before{bottom:calc(100% - 26px);}
-.di-dc{width:56px;flex-shrink:0;padding-top:18px;text-align:right;padding-right:13px;position:relative;z-index:1;}
-.di-yr{font-size:9px;color:var(--tx3);letter-spacing:.02em;line-height:1;}
-.di-mo{font-size:10px;color:var(--tx2);line-height:1.3;}
-.di-dy{font-family:'Playfair Display',serif;font-size:19px;color:var(--gold);line-height:1;}
+.di-dc{width:52px;flex-shrink:0;padding-top:14px;text-align:center;padding-right:8px;position:relative;z-index:1;}
+.di-yr{font-size:9px;color:var(--tx3);letter-spacing:.02em;line-height:1;display:none;}
+.di-mo{font-size:11px;color:var(--tx2);line-height:1.4;font-weight:500;}
+.di-dy{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);line-height:1;}
 .di-dot{width:10px;height:10px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);flex-shrink:0;margin-top:22px;position:relative;z-index:2;}
 .di-dot.wl{background:var(--blu);}
 .di-card{flex:1;min-width:0;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin:9px 0 9px 13px;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .2s;position:relative;overflow:hidden;}
@@ -236,7 +236,7 @@ main{padding:22px 20px;max-width:960px;margin:0 auto;overflow-x:hidden;}
 /* MODAL */
 .mbg{display:none;position:fixed;inset:0;background:var(--mbg);z-index:300;backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:18px;}
 .mbg.open{display:flex;}
-.modal{background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r);max-width:560px;width:100%;max-height:90vh;display:flex;flex-direction:column;animation:fdIn .25s ease;box-shadow:var(--shd);overflow:hidden;}
+.modal{background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r);max-width:560px;width:100%;max-height:90vh;display:flex;flex-direction:column;animation:fdIn .25s ease;box-shadow:var(--shd);}
 .modal-tit{font-family:'Playfair Display',serif;font-size:20px;color:var(--tx);margin-bottom:3px;}
 .modal-sub{font-size:12px;color:var(--tx2);margin-bottom:13px;}
 .dr{display:flex;gap:8px;margin-bottom:8px;font-size:13px;}
@@ -244,7 +244,7 @@ main{padding:22px 20px;max-width:960px;margin:0 auto;overflow-x:hidden;}
 .dv{color:var(--tx);font-family:'Noto Serif KR',serif;}
 .mrev{background:var(--sf2);border-radius:var(--rs);padding:11px;font-size:13px;color:var(--tx);line-height:1.8;margin:11px 0;border-left:3px solid var(--gold);font-style:italic;font-family:'Noto Serif KR',serif;}
 .mact{display:flex;gap:8px;justify-content:flex-end;margin-top:15px;flex-wrap:wrap;}
-.modal-tabs{display:flex;gap:8px;padding:16px 20px 12px;border-bottom:1px solid var(--bd);background:var(--sf);flex-shrink:0;}
+.modal-tabs{display:flex;gap:8px;padding:14px 20px 12px;border-bottom:1px solid var(--bd);background:var(--sf);flex-shrink:0;border-radius:var(--r) var(--r) 0 0;}
 .modal-body{flex:1;overflow-y:auto;padding:16px 20px 20px;}
 .mtab{font-size:13px;font-family:'Noto Serif KR',serif;padding:5px 14px;border-radius:8px;cursor:pointer;border:1px solid var(--bd2);background:var(--sf2);color:var(--tx2);transition:all .2s;}
 .mtab.active{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.4);color:var(--gold);}
@@ -993,7 +993,7 @@ async function delEntry(id){if(!confirm('이 기록을 삭제할까요?'))return
   const MN=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 
   /* 상단 요약 */
-  document.getElementById('sth').innerHTML=`<div class="stc"><div class="stc-lb">총 관람 편수</div><div class="stc-v">${watched.length}</div><div class="stc-s">편</div></div><div class="stc" onclick="showStatList('wishlist',null,null)" style="cursor:pointer"><div class="stc-lb">보고싶은 목록</div><div class="stc-v">${wish.length}</div><div class="stc-s">편 대기중 ›</div></div>`;
+  document.getElementById('sth').innerHTML=`<div class="stc" onclick="showStatList('all',null,null)" style="cursor:pointer"><div class="stc-lb">총 관람 편수</div><div class="stc-v">${watched.length}</div><div class="stc-s">편 ›</div></div><div class="stc" onclick="showStatList('wishlist',null,null)" style="cursor:pointer"><div class="stc-lb">보고싶은 목록</div><div class="stc-v">${wish.length}</div><div class="stc-s">편 대기중 ›</div></div>`;
 
   /* 연도별 통계 */
   const yM={};
@@ -1077,14 +1077,17 @@ async function testSheetConnection(){
 function showStatList(type,a,b){
   const watched=diary.filter(e=>e.type==='watched');
 
-  if(type==='wishlist'){
+  if(type==='all'){
+    if(!watched.length){showToast('관람 기록이 없습니다.');return;}
+    title='전체 관람 영화';items=watched;
+  } else if(type==='wishlist'){
     const wish=diary.filter(e=>e.type==='wishlist');
     if(!wish.length){showToast('보고싶은 영화가 없습니다.');return;}
     let rows='';
     wish.forEach(e=>{
       const m=e.movie;
-      const po=m.poster?'<img src="https://image.tmdb.org/t/p/w92'+m.poster+'" style="width:38px;height:57px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display=\'none\'">':'<div style="width:38px;height:57px;background:var(--sf3);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center">🎬</div>';
-      rows+='<div onclick="closeMD();setTimeout(()=>showDetail('+e.id+'),80)" style="display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--bd);cursor:pointer">'+po+'<div style="flex:1;min-width:0"><div style="font-weight:500;font-size:14px;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(m.title||'')+'</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">'+(m.year||'')+((m.year&&m.country)?' · ':'')+(m.country||'')+'</div><div style="font-size:11px;color:var(--tx3);margin-top:1px">추가일: '+(e.addedAt||'').slice(0,10)+'</div></div></div>';
+      const po=m.poster?'<img src="https://image.tmdb.org/t/p/w92'+m.poster+'" style="width:44px;height:66px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--bd)" onerror="this.style.display=\'none\'">':'<div style="width:38px;height:57px;background:var(--sf3);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center">🎬</div>';
+      rows+='<div onclick="closeMD();setTimeout(()=>showDetail('+e.id+'),80)" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--bd);cursor:pointer;align-items:flex-start">'+po+'<div style="flex:1;min-width:0"><div style="font-weight:500;font-size:14px;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(m.title||'')+'</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">'+(m.year||'')+((m.year&&m.country)?' · ':'')+(m.country||'')+'</div><div style="font-size:11px;color:var(--tx3);margin-top:1px">추가일: '+(e.addedAt||'').slice(0,10)+'</div></div></div>';
     });
     document.getElementById('mCon').innerHTML='<div><div style="font-family:\'Playfair Display\',serif;font-style:italic;font-size:18px;color:var(--gold);margin-bottom:4px">보고싶은 영화</div><div style="font-size:12px;color:var(--tx3);margin-bottom:14px">'+wish.length+'편</div>'+rows+'</div>';
     document.getElementById('mBg').classList.add('open');
@@ -1111,8 +1114,8 @@ function showStatList(type,a,b){
       const m=e.movie;
       const st=e.rating?'★'.repeat(e.rating):'';
       const loc=e.watchCity?'📍'+e.watchCountry+'·'+e.watchCity:e.watchCountry?'📍'+e.watchCountry:'';
-      const po=m.poster?'<img src="https://image.tmdb.org/t/p/w92'+m.poster+'" style="width:38px;height:57px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display=\'none\'">':'<div style="width:38px;height:57px;background:var(--sf3);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center">🎬</div>';
-      html+='<div onclick="closeMD();setTimeout(()=>showDetail('+e.id+'),80)" style="display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--bd);cursor:pointer">'+po+'<div style="flex:1;min-width:0"><div style="font-weight:500;font-size:14px;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(m.title||'')+'</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">'+(m.year||'')+((m.year&&m.country)?' · ':'')+(m.country||'')+'</div>'+(st?'<div style="color:var(--gold);font-size:11px;margin-top:1px">'+st+'</div>':'')+'<div style="font-size:11px;color:var(--tx3);margin-top:1px">'+(e.date||'')+((e.date&&loc)?' ':'')+loc+'</div></div></div>';
+      const po=m.poster?'<img src="https://image.tmdb.org/t/p/w92'+m.poster+'" style="width:44px;height:66px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--bd)" onerror="this.style.display=\'none\'">':'<div style="width:38px;height:57px;background:var(--sf3);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center">🎬</div>';
+      html+='<div onclick="closeMD();setTimeout(()=>showDetail('+e.id+'),80)" style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--bd);cursor:pointer;align-items:flex-start">'+po+'<div style="flex:1;min-width:0"><div style="font-weight:500;font-size:14px;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(m.title||'')+'</div><div style="font-size:11px;color:var(--tx2);margin-top:2px">'+(m.year||'')+((m.year&&m.country)?' · ':'')+(m.country||'')+'</div>'+(st?'<div style="color:var(--gold);font-size:11px;margin-top:1px">'+st+'</div>':'')+'<div style="font-size:11px;color:var(--tx3);margin-top:1px">'+(e.date||'')+((e.date&&loc)?' ':'')+loc+'</div></div></div>';
     });
     html+='</div>';
   });
